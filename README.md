@@ -76,7 +76,7 @@ Po zainstalowaniu addon, musisz go aktywować w Minecraft:
 ## 📁 Struktura projektu
 
 ```
-MyMusic/
+MyMusicDisc/
 ├── src/                          # Pliki MP3 do przetworzenia
 ├── BP/                           # Behavior Pack
 │   ├── items/my_music_disc/     # Custom dyski muzyczne
