@@ -1,0 +1,75 @@
+{
+    "format_version": "1.14.0",
+    "sound_definitions": {
+        "record.rosa_linn_snap": {
+            "__use_legacy_max_distance": true,
+            "category": "record",
+            "max_distance": 64.0,
+            "min_distance": null,
+            "sounds": [
+                {
+                    "load_on_low_memory": true,
+                    "name": "sounds/music/game/records/rosa_linn_snap",
+                    "stream": true,
+                    "volume": 0.5
+                }
+            ]
+        },
+        "record.marcus_martinus_unforgettable": {
+            "__use_legacy_max_distance": true,
+            "category": "record",
+            "max_distance": 64.0,
+            "min_distance": null,
+            "sounds": [
+                {
+                    "load_on_low_memory": true,
+                    "name": "sounds/music/game/records/marcus_martinus_unforgettable",
+                    "stream": true,
+                    "volume": 0.5
+                }
+            ]
+        },
+        "record.go_jo_milkshake_man": {
+            "__use_legacy_max_distance": true,
+            "category": "record",
+            "max_distance": 64.0,
+            "min_distance": null,
+            "sounds": [
+                {
+                    "load_on_low_memory": true,
+                    "name": "sounds/music/game/records/go_jo_milkshake_man",
+                    "stream": true,
+                    "volume": 0.5
+                }
+            ]
+        },
+        "record.emmy_laika_party": {
+            "__use_legacy_max_distance": true,
+            "category": "record",
+            "max_distance": 64.0,
+            "min_distance": null,
+            "sounds": [
+                {
+                    "load_on_low_memory": true,
+                    "name": "sounds/music/game/records/emmy_laika_party",
+                    "stream": true,
+                    "volume": 0.5
+                }
+            ]
+        },
+        "record.miriana_conte_serving_kant": {
+            "__use_legacy_max_distance": true,
+            "category": "record",
+            "max_distance": 64.0,
+            "min_distance": null,
+            "sounds": [
+                {
+                    "load_on_low_memory": true,
+                    "name": "sounds/music/game/records/miriana_conte_serving_kant",
+                    "stream": true,
+                    "volume": 0.5
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,45 @@
+{
+  "format_version": 2,
+  "metadata": {
+    "authors": [
+      "Flower7C3"
+    ],
+    "product_type": "addon"
+  },
+  "header": {
+    "name": "My Music Disc",
+    "description": "allow user to create custom music discs",
+    "min_engine_version": [
+      1,
+      21,
+      40
+    ],
+    "uuid": "a13b3be6-d870-42e7-8a8b-2e9d01b03d26",
+    "version": [
+      10,
+      0,
+      41
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "e0e24a1b-9345-4ad8-a6a5-e630c033a8e5",
+      "version": [
+        10,
+        0,
+        41
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "uuid": "df9a6931-46e3-477b-a517-ec0abdab0f07",
+      "version": [
+        10,
+        0,
+        41
+      ]
+    }
+  ]
+}

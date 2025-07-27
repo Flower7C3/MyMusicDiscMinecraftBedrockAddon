@@ -1,0 +1,60 @@
+{
+  "format_version": 2,
+  "metadata": {
+    "authors": [
+      "Flower7C3"
+    ],
+    "product_type": "addon"
+  },
+  "header": {
+    "name": "My Music Disc",
+    "description": "allow user to create custom music discs",
+    "min_engine_version": [
+      1,
+      21,
+      40
+    ],
+    "uuid": "df9a6931-46e3-477b-a517-ec0abdab0f07",
+    "version": [
+      10,
+      0,
+      41
+    ]
+  },
+  "modules": [
+    {
+      "type": "data",
+      "uuid": "cab657cc-304a-4093-9815-e9977b1b3106",
+      "version": [
+        10,
+        0,
+        41
+      ]
+    },
+    {
+      "type": "script",
+      "language": "javascript",
+      "entry": "main.js",
+      "uuid": "4bfb5f47-47ed-4f7b-8ccc-8b8d8348c8c5",
+      "version": [
+        10,
+        0,
+        41
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "1.19.0"
+    },
+    {
+      "uuid": "a13b3be6-d870-42e7-8a8b-2e9d01b03d26",
+      "version": [
+        10,
+        0,
+        41
+      ]
+    }
+  ]
+}
