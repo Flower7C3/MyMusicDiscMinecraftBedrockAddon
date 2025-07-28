@@ -151,7 +151,7 @@ class MusicDiscGenerator:
                 with open(self.checksums_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception as e:
-                print(f"⚠️  Błąd podczas ładowania sum kontrolnych: {e}")
+                print(ConsoleStyle.warning(f"Błąd podczas ładowania sum kontrolnych: {e}"))
         return {}
     
     def _save_checksums(self, checksums: Dict[str, str]):
@@ -160,7 +160,7 @@ class MusicDiscGenerator:
             with open(self.checksums_file, 'w', encoding='utf-8') as f:
                 json.dump(checksums, f, indent=4, ensure_ascii=False)
         except Exception as e:
-            print(f"⚠️  Błąd podczas zapisywania sum kontrolnych: {e}")
+            print(ConsoleStyle.warning(f"Błąd podczas zapisywania sum kontrolnych: {e}"))
     
     def _convert_mp3_to_ogg(self, mp3_file: Path, ogg_file: Path) -> bool:
         """Konwertuje plik MP3 do formatu OGG z sprawdzaniem sum kontrolnych."""
@@ -289,7 +289,7 @@ class MusicDiscGenerator:
             
             for key in to_remove:
                 del sound_definitions[key]
-                print(ConsoleStyle.warning(f"Usunięto wpis dźwięku: {key}"))
+                print(ConsoleStyle.delete(f"Usunięto wpis dźwięku: {key}"))
             
             # Dodaj nowe wpisy
             for disc_name in disc_names:
@@ -346,7 +346,7 @@ class MusicDiscGenerator:
             
             for key in to_remove:
                 del texture_data[key]
-                print(ConsoleStyle.warning(f"Usunięto wpis tekstury: {key}"))
+                print(ConsoleStyle.delete(f"Usunięto wpis tekstury: {key}"))
             
             # Dodaj nowe wpisy
             for disc_name in disc_names:
@@ -376,7 +376,7 @@ class MusicDiscGenerator:
                 sound_name = sound_file.stem
                 if sound_name not in current_disc_names:
                     sound_file.unlink()
-                    print(ConsoleStyle.warning(f"Usunięto stary plik dźwięku: {sound_file.name}"))
+                    print(ConsoleStyle.delete(f"Usunięto stary plik dźwięku: {sound_file.name}"))
         
         # Sprawdź istniejące tekstury
         if self.textures_dir.exists():
@@ -384,7 +384,7 @@ class MusicDiscGenerator:
                 texture_name = texture_file.stem.replace("music_disc_", "")
                 if texture_name not in current_disc_names:
                     texture_file.unlink()
-                    print(ConsoleStyle.warning(f"Usunięto starą teksturę: {texture_file.name}"))
+                    print(ConsoleStyle.delete(f"Usunięto starą teksturę: {texture_file.name}"))
         
         # Usuń nadmiarowe pliki itemów
         if self.items_dir.exists():
@@ -392,7 +392,7 @@ class MusicDiscGenerator:
                 item_name = item_file.stem.replace("music_disc_", "").replace(".item", "")
                 if item_name not in current_disc_names:
                     item_file.unlink()
-                    print(ConsoleStyle.warning(f"Usunięto nadmiarowy plik itemu: {item_file.name}"))
+                    print(ConsoleStyle.delete(f"Usunięto nadmiarowy plik itemu: {item_file.name}"))
         
         # Usuń nadmiarowe wpisy w sound_definitions.json
         self._cleanup_sound_definitions(current_disc_names)
@@ -635,7 +635,7 @@ export const musicDiscs = {
                             # Konwertuj sekundy na ticki (20 ticków na sekundę)
                             tick_length = int(duration * 20)
                     except Exception as e:
-                        print(f"⚠️  Nie można obliczyć długości dla {disc_name}: {e}")
+                        print(ConsoleStyle.warning(f"Nie można obliczyć długości dla {disc_name}: {e}"))
                 
                 # Dodaj nowy wpis
                 content += f',\n    "personal_music_compilation:music_disc_{disc_name}": {{\n'
@@ -685,7 +685,7 @@ export const musicDiscs = {
             for key in to_remove:
                 del sound_definitions[key]
                 removed_count += 1
-                print(ConsoleStyle.warning(f"Usunięto wpis dźwięku: {key}"))
+                print(ConsoleStyle.delete(f"Usunięto wpis dźwięku: {key}"))
             
             if removed_count > 0:
                 # Zapisz zaktualizowany plik

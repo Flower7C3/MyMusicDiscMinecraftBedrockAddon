@@ -111,6 +111,13 @@ class ConsoleStyle:
         return ConsoleStyle.colorize(f"{ConsoleStyle.WARNING}  {text}", ConsoleStyle.WARNING_MSG)
     
     @staticmethod
+    def delete(text: str) -> str:
+        """Stylizuj komunikat usuwania"""
+        if ConsoleStyle.QUIET_MODE:
+            return None
+        return ConsoleStyle.colorize(f"{ConsoleStyle.DELETE}  {text}", ConsoleStyle.WARNING_MSG)
+    
+    @staticmethod
     def info(text: str) -> str:
         """Stylizuj komunikat informacyjny"""
         if ConsoleStyle.QUIET_MODE:
