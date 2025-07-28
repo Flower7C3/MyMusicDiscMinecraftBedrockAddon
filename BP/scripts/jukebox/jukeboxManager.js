@@ -3,11 +3,11 @@ import { musicDiscs } from '../musicDisc/musicDiscs';
 import { randomNum, randomWholeNum } from '../math/randomNumbers';
 var JukeboxStates;
 (function (JukeboxStates) {
-    JukeboxStates["Playing_Disc"] = "my_music_disc:playing_disc";
-JukeboxStates["Vanilla_Disc_1"] = "my_music_disc:vanilla_disc_1";
-JukeboxStates["Vanilla_Disc_2"] = "my_music_disc:vanilla_disc_2";
-JukeboxStates["Custom_Disc_1"] = "my_music_disc:custom_disc_1";
-JukeboxStates["Custom_Disc_2"] = "my_music_disc:custom_disc_2";
+    JukeboxStates["Playing_Disc"] = "personal_music_compilation:playing_disc";
+JukeboxStates["Vanilla_Disc_1"] = "personal_music_compilation:vanilla_disc_1";
+JukeboxStates["Vanilla_Disc_2"] = "personal_music_compilation:vanilla_disc_2";
+JukeboxStates["Custom_Disc_1"] = "personal_music_compilation:custom_disc_1";
+JukeboxStates["Custom_Disc_2"] = "personal_music_compilation:custom_disc_2";
 })(JukeboxStates || (JukeboxStates = {}));
 const states = [
     JukeboxStates.Vanilla_Disc_1,
@@ -25,7 +25,7 @@ var HopperLocations;
 })(HopperLocations || (HopperLocations = {}));
 const playingJukeboxes = {};
 export class jukeboxManager {
-    static jukeboxID = 'my_music_disc:jukebox';
+    static jukeboxID = 'personal_music_compilation:jukebox';
     static tick(block, dimension) {
         const center = block.center();
         const players = this.getPlayersInRadius(center, dimension, 40);
@@ -385,7 +385,7 @@ export class jukeboxManager {
         }
         
         // Ustaw odpowiedni stan w zależności od typu dysku
-        if (id.startsWith("my_music_disc:")) {
+        if (id.startsWith("personal_music_compilation:")) {
             // Customowe dyski idą do custom_disc_1
             try {
                 block.setPermutation(block.permutation.withState(JukeboxStates.Custom_Disc_1, id));

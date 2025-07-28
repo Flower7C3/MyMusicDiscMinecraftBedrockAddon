@@ -7,7 +7,7 @@
     "product_type": "addon"
   },
   "header": {
-    "name": "My Music Disc",
+            "name": "Personal Music Compilation",
     "description": "allow user to create custom music discs",
     "min_engine_version": [
       1,

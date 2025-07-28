@@ -23,20 +23,25 @@ class MusicDiscGenerator:
         self.rp_dir = self.project_root / "RP"
         
         # Katalogi
-        self.items_dir = self.bp_dir / "items" / "mymusic"
-        self.sounds_dir = self.rp_dir / "sounds" / "music" / "game" / "records"
-        self.textures_dir = self.rp_dir / "textures" / "mymusic" / "items"
+        self.items_dir = self.bp_dir / "items"
+        self.sounds_dir = self.rp_dir / "sounds" / "items"
+        self.textures_dir = self.rp_dir / "textures" / "items"
         
         # Pliki konfiguracyjne
         self.jukebox_file = self.bp_dir / "blocks" / "jukebox.json"
+        self.jukebox_dist_file = self.bp_dir / "blocks" / "jukebox.dist.json"
         self.sound_definitions_file = self.rp_dir / "sounds" / "sound_definitions.json"
+        self.sound_definitions_dist_file = self.rp_dir / "sounds" / "sound_definitions.dist.json"
         self.item_texture_file = self.rp_dir / "textures" / "item_texture.json"
+        self.item_texture_dist_file = self.rp_dir / "textures" / "item_texture.dist.json"
+        self.music_discs_file = self.bp_dir / "scripts" / "musicDisc" / "musicDiscs.js"
+        self.music_discs_dist_file = self.bp_dir / "scripts" / "musicDisc" / "musicDiscs.dist.js"
         
         # Plik z sumami kontrolnymi
         self.checksums_file = self.project_root / ".ogg_checksums.json"
         
         # Namespace
-        self.namespace = "mymusic"
+        self.namespace = "personal_music_compilation"
         
         # Utworzenie katalogów jeśli nie istnieją
         self._create_directories()
@@ -217,21 +222,24 @@ class MusicDiscGenerator:
         }
     
     def _update_jukebox_json(self, disc_names: List[str]):
-        """Aktualizuje jukebox.json dodając nowe dyski do sekcji my_music_disc:custom_disc_1."""
-        if not self.jukebox_file.exists():
-            print(f"❌ Plik {self.jukebox_file} nie istnieje!")
+        """Aktualizuje jukebox.json dodając nowe dyski do sekcji personal_music_compilation:custom_disc_1."""
+        if not self.jukebox_dist_file.exists():
+            print(f"❌ Plik {self.jukebox_dist_file} nie istnieje!")
             return False
+        
+        # Skopiuj plik dist do głównego pliku
+        shutil.copy2(self.jukebox_dist_file, self.jukebox_file)
         
         try:
             with open(self.jukebox_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
-            # Znajdź sekcję my_music_disc:custom_disc_1
+            # Znajdź sekcję personal_music_compilation:custom_disc_1
             states = data["minecraft:block"]["description"]["states"]
-            custom_disc_1 = states.get("my_music_disc:custom_disc_1", [])
+            custom_disc_1 = states.get("personal_music_compilation:custom_disc_1", [])
             
-            # Usuń wszystkie istniejące dyski my_music_disc: i moremusicdiscs:
-            custom_disc_1 = [item for item in custom_disc_1 if not item.startswith("my_music_disc:music_disc_") and not item.startswith("moremusicdiscs:music_disc_")]
+            # Usuń wszystkie istniejące dyski personal_music_compilation: i moremusicdiscs:
+            custom_disc_1 = [item for item in custom_disc_1 if not item.startswith("personal_music_compilation:music_disc_") and not item.startswith("moremusicdiscs:music_disc_")]
             
             # Dodaj "none" na początku jeśli nie ma
             if "none" not in custom_disc_1:
@@ -244,7 +252,7 @@ class MusicDiscGenerator:
                     custom_disc_1.append(disc_identifier)
                     print(f"✅ Dodano dysk do jukebox: {disc_identifier}")
             
-            states["my_music_disc:custom_disc_1"] = custom_disc_1
+            states["personal_music_compilation:custom_disc_1"] = custom_disc_1
             
             with open(self.jukebox_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
@@ -258,9 +266,12 @@ class MusicDiscGenerator:
     
     def _update_sound_definitions(self, disc_names: List[str]):
         """Aktualizuje sound_definitions.json dodając nowe definicje dźwięków."""
-        if not self.sound_definitions_file.exists():
-            print(f"❌ Plik {self.sound_definitions_file} nie istnieje!")
+        if not self.sound_definitions_dist_file.exists():
+            print(f"❌ Plik {self.sound_definitions_dist_file} nie istnieje!")
             return False
+        
+        # Skopiuj plik dist do głównego pliku
+        shutil.copy2(self.sound_definitions_dist_file, self.sound_definitions_file)
         
         try:
             with open(self.sound_definitions_file, 'r', encoding='utf-8') as f:
@@ -268,7 +279,7 @@ class MusicDiscGenerator:
             
             sound_definitions = data["sound_definitions"]
             
-            # Usuń wszystkie istniejące wpisy record. dla dysków my_music_disc:
+            # Usuń wszystkie istniejące wpisy record. dla dysków personal_music_compilation:
             to_remove = []
             for key in sound_definitions.keys():
                 if key.startswith("record."):
@@ -292,7 +303,7 @@ class MusicDiscGenerator:
                         "sounds": [
                             {
                                 "load_on_low_memory": True,
-                                "name": f"sounds/music/game/records/{disc_name}",
+                                "name": f"sounds/items/{disc_name}",
                                 "stream": True,
                                 "volume": 0.50
                             }
@@ -312,9 +323,12 @@ class MusicDiscGenerator:
     
     def _update_item_texture(self, disc_names: List[str]):
         """Aktualizuje item_texture.json dodając nowe tekstury."""
-        if not self.item_texture_file.exists():
-            print(f"❌ Plik {self.item_texture_file} nie istnieje!")
+        if not self.item_texture_dist_file.exists():
+            print(f"❌ Plik {self.item_texture_dist_file} nie istnieje!")
             return False
+        
+        # Skopiuj plik dist do głównego pliku
+        shutil.copy2(self.item_texture_dist_file, self.item_texture_file)
         
         try:
             with open(self.item_texture_file, 'r', encoding='utf-8') as f:
@@ -322,11 +336,11 @@ class MusicDiscGenerator:
             
             texture_data = data["texture_data"]
             
-            # Usuń wszystkie istniejące wpisy dla dysków my_music_disc: i moremusicdiscs:
+            # Usuń wszystkie istniejące wpisy dla dysków personal_music_compilation: i moremusicdiscs:
             to_remove = []
             for key in texture_data.keys():
-                if key.startswith("my_music_disc:music_disc_") or key.startswith("moremusicdiscs:music_disc_"):
-                    disc_name = key.replace("my_music_disc:music_disc_", "").replace("moremusicdiscs:music_disc_", "")
+                if key.startswith("personal_music_compilation:music_disc_") or key.startswith("moremusicdiscs:music_disc_"):
+                    disc_name = key.replace("personal_music_compilation:music_disc_", "").replace("moremusicdiscs:music_disc_", "")
                     if disc_name not in disc_names:
                         to_remove.append(key)
             
@@ -339,7 +353,7 @@ class MusicDiscGenerator:
                 texture_key = f"{self.namespace}:music_disc_{disc_name}"
                 if texture_key not in texture_data:
                     texture_data[texture_key] = {
-                        "textures": f"textures/{self.namespace}/items/music_disc_{disc_name}"
+                        "textures": f"textures/items/music_disc_{disc_name}"
                     }
                     print(f"✅ Dodano wpis tekstury: {texture_key}")
             
@@ -388,11 +402,12 @@ class MusicDiscGenerator:
     
     def _update_music_discs_js(self, disc_names: List[str]):
         """Aktualizuje musicDiscs.js z nowymi dyskami."""
-        music_discs_file = self.bp_dir / "scripts" / "musicDisc" / "musicDiscs.js"
-        
-        if not music_discs_file.exists():
-            print(f"❌ Plik {music_discs_file} nie istnieje!")
+        if not self.music_discs_dist_file.exists():
+            print(f"❌ Plik {self.music_discs_dist_file} nie istnieje!")
             return
+        
+        # Skopiuj plik dist do głównego pliku
+        shutil.copy2(self.music_discs_dist_file, self.music_discs_file)
         
         try:
             # Zbierz wszystkich artystów z plików MP3
@@ -598,7 +613,7 @@ export const musicDiscs = {
         }
     }"""
             
-            # Dodaj nowe wpisy mymusic:
+            # Dodaj nowe wpisy personal_music_compilation:
             for disc_name in disc_names:
                 # Wyciągnij artystę i tytuł z nazwy pliku MP3
                 artist, title = self._get_artist_and_title_from_mp3(disc_name)
@@ -623,7 +638,7 @@ export const musicDiscs = {
                         print(f"⚠️  Nie można obliczyć długości dla {disc_name}: {e}")
                 
                 # Dodaj nowy wpis
-                content += f',\n    "my_music_disc:music_disc_{disc_name}": {{\n'
+                content += f',\n    "personal_music_compilation:music_disc_{disc_name}": {{\n'
                 content += f'        musicName: "{title}",\n'
                 content += f'        artist: artistNames.{artist},\n'
                 content += f'        sound: {{\n'
@@ -633,18 +648,18 @@ export const musicDiscs = {
                 content += f'        }}\n'
                 content += f'    }}'
                 
-                print(f"✅ Dodano wpis do musicDiscs.js: my_music_disc:music_disc_{disc_name} ({artist} - {title})")
+                print(f"✅ Dodano wpis do musicDiscs.js: personal_music_compilation:music_disc_{disc_name} ({artist} - {title})")
             
             # Dodaj końcowy nawias
             content += "\n};"
             
-            with open(music_discs_file, 'w', encoding='utf-8') as f:
+            with open(self.music_discs_file, 'w', encoding='utf-8') as f:
                 f.write(content)
             
-            print(f"✅ Zaktualizowano {music_discs_file}")
+            print(f"✅ Zaktualizowano {self.music_discs_file}")
             
         except Exception as e:
-            print(f"❌ Błąd podczas aktualizacji {music_discs_file}: {e}")
+            print(f"❌ Błąd podczas aktualizacji {self.music_discs_file}: {e}")
     
     def _cleanup_sound_definitions(self, current_disc_names: List[str]):
         """Usuwa nadmiarowe wpisy w sound_definitions.json."""

@@ -2,7 +2,7 @@ import { world } from '@minecraft/server';
 import { jukeboxManager } from '../jukebox/jukeboxManager';
 const blockComponents = [
     {
-        id: "my_music_disc:jukebox",
+        id: "personal_music_compilation:jukebox",
         data: {
             onPlayerInteract: (data) => {
                 if (!data.player)

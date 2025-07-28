@@ -190,13 +190,4 @@ export const musicDiscs = {
             tickLength: 6000
         }
     },
-    "my_music_disc:music_disc_file_example_mp3_700kb": {
-        musicName: "File Example Mp3 700Kb",
-        artist: artistNames.Unknown_Artist,
-        sound: {
-            volume: 0.75,
-            id: "record.file_example_mp3_700kb",
-            tickLength: 840
-        }
-    }
 };

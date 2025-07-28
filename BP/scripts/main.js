@@ -15,7 +15,7 @@ system.runInterval(() => {
                 continue;
             if (item.typeId != 'minecraft:jukebox')
                 continue;
-            const newItem = new ItemStack("my_music_disc:jukebox", item.amount);
+            const newItem = new ItemStack("personal_music_compilation:jukebox", item.amount);
             inv.container.setItem(i, newItem);
         }
     }

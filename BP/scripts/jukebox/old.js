@@ -4,7 +4,7 @@ export class jukeboxManager {
     static interactWithJukebox(block, player) {
         const equippable = player.getComponent("equippable");
         const heldItem = equippable.getEquipmentSlot(EquipmentSlot.Mainhand);
-        if (block.permutation.matches('mymusic:jukebox')) {
+        if (block.permutation.matches('personal_music_compilation:jukebox')) {
             if (jukeboxManager.getJukebox(block.location, block.dimension.id) == undefined)
                 jukeboxManager.setJukebox(block.location, block.dimension.id, { playing_disc: "nothing", playingID: 0 });
             const jukeboxData = jukeboxManager.getJukebox(block.location, block.dimension.id);
