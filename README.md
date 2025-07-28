@@ -131,11 +131,6 @@ Skrypt automatycznie:
 
 ## 🔧 Konfiguracja
 
-### Wymagania systemowe
-- **Python 3.6+**
-- **ffmpeg** - do konwersji audio
-- **Minecraft Bedrock** — z eksperymentalnymi funkcjami
-
 ### Eksperymentalne funkcje
 W świecie Minecraft włącz:
 - ✅ Custom Blocks
