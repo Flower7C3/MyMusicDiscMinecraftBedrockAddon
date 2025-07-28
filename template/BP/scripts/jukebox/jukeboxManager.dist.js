@@ -1,20 +1,20 @@
 import { EquipmentSlot, EntityEquippableComponent, GameMode, system, ItemStack, BlockInventoryComponent } from '@minecraft/server';
 import { musicDiscs } from '../musicDisc/musicDiscs';
 import { randomNum, randomWholeNum } from '../math/randomNumbers';
+
 var JukeboxStates;
 (function (JukeboxStates) {
     JukeboxStates["Playing_Disc"] = "personal_music_compilation:playing_disc";
-JukeboxStates["Vanilla_Disc_1"] = "personal_music_compilation:vanilla_disc_1";
-JukeboxStates["Vanilla_Disc_2"] = "personal_music_compilation:vanilla_disc_2";
-JukeboxStates["Custom_Disc_1"] = "personal_music_compilation:custom_disc_1";
-JukeboxStates["Custom_Disc_2"] = "personal_music_compilation:custom_disc_2";
+    JukeboxStates["Vanilla_Disc_1"] = "personal_music_compilation:vanilla_disc_1";
+    JukeboxStates["Vanilla_Disc_2"] = "personal_music_compilation:vanilla_disc_2";
+{{CUSTOM_DISC_STATES}}
 })(JukeboxStates || (JukeboxStates = {}));
+
 const states = [
     JukeboxStates.Vanilla_Disc_1,
-    JukeboxStates.Vanilla_Disc_2,
-    JukeboxStates.Custom_Disc_1,
-    JukeboxStates.Custom_Disc_2
+    JukeboxStates.Vanilla_Disc_2{{CUSTOM_DISC_STATES_ARRAY}}
 ];
+
 var HopperLocations;
 (function (HopperLocations) {
     HopperLocations["Up"] = "up";
@@ -23,9 +23,16 @@ var HopperLocations;
     HopperLocations["East"] = "east";
     HopperLocations["West"] = "west";
 })(HopperLocations || (HopperLocations = {}));
+
+function debug(message){
+	console.log(`[DEBUG] ${message}`);
+}
+
 const playingJukeboxes = {};
+
 export class jukeboxManager {
     static jukeboxID = 'personal_music_compilation:jukebox';
+    
     static tick(block, dimension) {
         const center = block.center();
         const players = this.getPlayersInRadius(center, dimension, 40);
@@ -36,8 +43,9 @@ export class jukeboxManager {
             if (!playingJukeboxes[`${block.dimension.id}.${JSON.stringify(block.location)}`]) {
                 block.setPermutation(block.permutation.withState(JukeboxStates.Playing_Disc, false));
                 const discData = this.getPlayingDisc(block.permutation);
-                if (discData)
+                if (discData && discData.data && discData.data.sound) {
                     this.stopSoundInRadius(discData.data.sound.id, block.location, block.dimension, 100);
+                }
             }
             return;
         }
@@ -53,8 +61,10 @@ export class jukeboxManager {
                 return;
             if (inv.container.emptySlotsCount <= 0)
                 return;
-            const item = new ItemStack(discData.id, 1);
-            inv.container.addItem(item);
+            if (discData.id && typeof discData.id === 'string') {
+                const item = new ItemStack(discData.id, 1);
+                inv.container.addItem(item);
+            }
             this.clearDisc(block);
         }
         else {
@@ -86,56 +96,58 @@ export class jukeboxManager {
             }
         }
     }
+    
     static getInventory(block) {
         const inv = block.getComponent(BlockInventoryComponent.componentId);
         return inv;
     }
+    
     static interactWithJukebox(block, player) {
         const dimension = block.dimension;
         const disc = this.getPlayingDisc(block.permutation);
         const center = block.center();
         
-        // Debug: Sprawdź czy funkcja jest wywoływana
-        console.warn(`[DEBUG] interactWithJukebox called for block: ${block.typeId}`);
-        
         if (!disc) {
-            const mainhand = player.getComponent(EntityEquippableComponent.componentId).getEquipmentSlot(EquipmentSlot.Mainhand);
-            if (!mainhand) {
-                console.warn(`[DEBUG] No mainhand component`);
+            const mainHand = player.getComponent(EntityEquippableComponent.componentId).getEquipmentSlot(EquipmentSlot.Mainhand);
+            if (!mainHand){
+                debug('interactWithJukebox: !disc && !mainHand')
                 return;
             }
-            const item = mainhand.getItem();
-            if (!item) {
-                console.warn(`[DEBUG] No item in mainhand`);
+            const item = mainHand.getItem();
+            if (!item){
+                debug('interactWithJukebox: !disc && !item')
                 return;
             }
-            console.warn(`[DEBUG] Item in hand: ${item.typeId}`);
-            
-            const discdata = musicDiscs[item.typeId];
-            if (!discdata) {
-                console.warn(`[DEBUG] No discdata for item: ${item.typeId}`);
+            const discData = musicDiscs[item.typeId];
+            if (!discData){
+                debug('interactWithJukebox: !disc && !discData')
                 return;
             }
-            console.warn(`[DEBUG] Found discdata for: ${item.typeId}`);
-            
             if (player.getGameMode() != GameMode.creative)
-                mainhand.setItem();
-            this.playDisc(block, dimension, discdata, item.typeId);
-        }
-        else {
-            console.warn(`[DEBUG] Stopping disc: ${disc.id}`);
-            this.stopSoundInRadius(disc.data.sound.id, center, dimension, 100);
-            const item = new ItemStack(disc.id, 1);
-            const itemEntity = this.spawnItemAnywhere(item, { x: center.x, y: center.y + 0.5, z: center.z }, block.dimension);
-            itemEntity.applyImpulse({ x: randomNum(-0.2, 0.2), y: 0.2, z: randomNum(-0.2, 0.2) });
+                mainHand.setItem();
+            this.playDisc(block, dimension, discData, item.typeId);
+        } else {
+            if (disc.data && disc.data.sound) {
+                this.stopSoundInRadius(disc.data.sound.id, center, dimension, 100);
+            }
+            if (disc.id && typeof disc.id === 'string') {
+                const item = new ItemStack(disc.id, 1);
+                const itemEntity = this.spawnItemAnywhere(item, { x: center.x, y: center.y + 0.5, z: center.z }, block.dimension);
+                itemEntity.applyImpulse({ x: randomNum(-0.2, 0.2), y: 0.2, z: randomNum(-0.2, 0.2) });
+            }else{
+                debug('interactWithJukebox: disc id not string')
+                debug(disc.id)
+            }
             this.clearDisc(block);
             delete playingJukeboxes[`${block.dimension.id}.${JSON.stringify(block.location)}`];
         }
     }
-    static getConnectedHoppers(mainblock, dimension) {
-        const blockLoc = mainblock.location;
+    
+    static getConnectedHoppers(mainBlock, dimension) {
+        const blockLoc = mainBlock.location;
         const hoppers = [];
         const directions = [HopperLocations.Up, HopperLocations.North, HopperLocations.South, HopperLocations.East, HopperLocations.West];
+        
         for (const dir of directions) {
             let loc = undefined;
             switch (dir) {
@@ -155,6 +167,7 @@ export class jukeboxManager {
                     loc = { x: -1, y: 0, z: 0 };
                     break;
             }
+            
             let block = undefined;
             if (loc == undefined)
                 continue;
@@ -166,6 +179,7 @@ export class jukeboxManager {
                 continue;
             if (block.typeId != "minecraft:hopper")
                 continue;
+            
             let connectedValue = undefined;
             const facing = block.permutation.getState("facing_direction");
             switch (facing) {
@@ -193,6 +207,7 @@ export class jukeboxManager {
         }
         return hoppers;
     }
+    
     static getOutputHopper(block) {
         let hopper = undefined;
         try {
@@ -205,146 +220,83 @@ export class jukeboxManager {
             return undefined;
         return hopper;
     }
-    static playDisc(block, dimension, discdata, discName) {
-        console.warn(`[DEBUG] playDisc called for: ${discName}`);
+    
+    static playDisc(block, dimension, discData, discName) {
+        debug(`playDisc called for: ${discName}`);
         const center = block.center();
         const location = block.location;
         playingJukeboxes[`${block.dimension.id}.${JSON.stringify(block.location)}`] = true;
         
-        try {
-            dimension.playSound(discdata.sound.id, center, { volume: discdata.sound.volume });
-            console.warn(`[DEBUG] Sound played: ${discdata.sound.id}`);
-        } catch (e) {
-            console.warn(`[DEBUG] Error playing sound: ${e}`);
-        }
-        
+        dimension.playSound(discData.sound.id, center, { volume: discData.sound.volume });
         this.setDisc(block, discName);
-        console.warn(`[DEBUG] Disc set: ${discName}`);
-        
         this.getPlayersInRadius(center, dimension, 20).forEach((player) => {
-            player.onScreenDisplay.setActionBar(`§dNow Playing: ${discdata.musicName} - ${discdata.artist}`);
+            player.onScreenDisplay.setActionBar(`§dNow Playing: ${discData.musicName} - ${discData.artist}`);
         });
         this.playNotes(block.location, dimension, discName);
+        
         let canceled = false;
         let tick = 0;
         const interval = system.runInterval(() => {
             tick++;
-            if ((tick * 10) > discdata.sound.tickLength) {
+            if ((tick * 10) > discData.sound.tickLength) {
                 system.clearRun(interval);
-                return;
-            }
-            let newBlock = undefined;
-            try {
-                newBlock = dimension.getBlock(location);
-            }
-            catch { }
-            if (!newBlock)
-                return;
-            if (newBlock.typeId != this.jukeboxID) {
                 canceled = true;
-                system.clearRun(interval);
                 return;
             }
-            const newdiscdata = this.getPlayingDisc(newBlock.permutation);
-            if (!newdiscdata) {
-                canceled = true;
-                system.clearRun(interval);
-                return;
-            }
-            if (newdiscdata.id != discName) {
-                canceled = true;
-                system.clearRun(interval);
-                return;
-            }
-        }, 10);
-        system.runTimeout(() => {
             if (canceled)
                 return;
-            let newBlock = undefined;
-            try {
-                newBlock = dimension.getBlock(location);
-            }
-            catch { }
+            const newBlock = dimension.getBlock(location);
             if (!newBlock)
                 return;
             if (newBlock.typeId != this.jukeboxID)
                 return;
-            const newdiscdata = this.getPlayingDisc(newBlock.permutation);
-            if (!newdiscdata)
+            const newDiscData = this.getPlayingDisc(newBlock.permutation);
+            if (!newDiscData){
+                debug('playDisc runTimeout: !newDiscData');
                 return;
-            if (newdiscdata.id != discName)
+            }
+            if (newDiscData.id != discName){
+                debug('playDisc runTimeout: newDiscData.id != discName');
                 return;
+            }
             newBlock.setPermutation(newBlock.permutation.withState(JukeboxStates.Playing_Disc, false));
             delete playingJukeboxes[`${block.dimension.id}.${JSON.stringify(block.location)}`];
-            this.stopSoundInRadius(newdiscdata.data.sound.id, center, dimension, 100);
-        }, discdata.sound.tickLength);
-        
-        // Dodaj loop dla odtwarzania dźwięku
-        this.startSoundLoop(block, dimension, discdata, discName);
-    }
-    
-    static startSoundLoop(block, dimension, discdata, discName) {
-        const location = block.location;
-        let tick = 0;
-        const maxTicks = Math.floor(discdata.sound.tickLength / 1000); // Konwertuj na sekundy
-        
-        const loopInterval = system.runInterval(() => {
-            tick++;
-            
-            // Sprawdź czy blok nadal istnieje i gra
-            let currentBlock;
-            try {
-                currentBlock = dimension.getBlock(location);
-            } catch {
-                system.clearRun(loopInterval);
-                return;
+            if (newDiscData.data && newDiscData.data.sound) {
+                this.stopSoundInRadius(newDiscData.data.sound.id, center, dimension, 100);
             }
-            
-            if (!currentBlock || currentBlock.typeId !== this.jukeboxID) {
-                system.clearRun(loopInterval);
-                return;
-            }
-            
-            const playingDisc = this.getPlayingDisc(currentBlock.permutation);
-            if (!playingDisc || playingDisc.id !== discName) {
-                system.clearRun(loopInterval);
-                return;
-            }
-            
-            // Odtwórz dźwięk ponownie
-            const center = currentBlock.center();
-            try {
-                dimension.playSound(discdata.sound.id, center, { volume: discdata.sound.volume });
-            } catch {
-                system.clearRun(loopInterval);
-                return;
-            }
-            
-            // Zatrzymaj po określonej liczbie powtórzeń
-            if (tick >= maxTicks) {
-                system.clearRun(loopInterval);
-            }
-        }, discdata.sound.tickLength);
+        }, discData.sound.tickLength);
     }
     
     static breakJukebox(data) {
+        debug(`breakJukebox`);
         const { block, dimension, player, destroyedBlockPermutation } = data;
         const playingDisc = this.getPlayingDisc(data.destroyedBlockPermutation);
-        if (!playingDisc)
+        if (!playingDisc){
+            debug('breakJukebox: !playingDisc');
             return;
-        const item = new ItemStack(playingDisc.id, 1);
+        }
         const center = block.center();
-        const itemEntity = this.spawnItemAnywhere(item, { x: center.x, y: center.y, z: center.z }, block.dimension);
-        itemEntity.applyImpulse({ x: randomNum(-0.2, 0.2), y: 0.2, z: randomNum(-0.2, 0.2) });
-        this.stopSoundInRadius(playingDisc.data.sound.id, center, block.dimension, 100);
+        if (playingDisc.id && typeof playingDisc.id === 'string') {
+            const item = new ItemStack(playingDisc.id, 1);
+            const itemEntity = this.spawnItemAnywhere(item, { x: center.x, y: center.y, z: center.z }, block.dimension);
+            itemEntity.applyImpulse({ x: randomNum(-0.2, 0.2), y: 0.2, z: randomNum(-0.2, 0.2) });
+        }
+        if (playingDisc.data && playingDisc.data.sound) {
+            this.stopSoundInRadius(playingDisc.data.sound.id, center, block.dimension, 100);
+        }
     }
+    
     static stopSoundInRadius(soundID, location, dimension, radius) {
+        debug(`stopSoundInRadius`);
         const players = this.getPlayersInRadius(location, dimension, 100);
         for (const player of players) {
             if (player.isValid())
                 player.runCommand(`stopsound @s  ${soundID}`);
         }
     }
+    
+
+    
     static getPlayingDisc(permutation) {
         let disc = undefined;
         for (const state of states) {
@@ -356,64 +308,38 @@ export class jukeboxManager {
         }
         return disc;
     }
+    
     static getPlayersInRadius(location, dimension, radius) {
         let players = [];
         players = dimension.getEntities({ location: location, maxDistance: radius, type: "minecraft:player" });
         return players;
     }
+    
     static spawnItemAnywhere(item, location, dimension) {
         const itemEntity = dimension.spawnItem(item, { x: location.x, y: 100, z: location.z });
         itemEntity.teleport(location);
         return itemEntity;
     }
+    
     static clearDisc(block) {
-        block.setPermutation(block.permutation.withState(JukeboxStates.Playing_Disc, false));
+        debug(`clearDisc for ${block.typeId}[${block.dimension.id}.${JSON.stringify(block.location)}] block`);
+        block.setPermutation(block.permutation.withState("personal_music_compilation:playing_disc", false));
         for (const state of states) {
             block.setPermutation(block.permutation.withState(state, "none"));
         }
     }
+    
     static setDisc(block, id) {
-        // Ustaw playing_disc na true
-        block.setPermutation(block.permutation.withState(JukeboxStates.Playing_Disc, true));
-        
-        // Wyczyść wszystkie stany dysków
+        debug(`setDisc: ${id}`);
         for (const state of states) {
+            block.setPermutation(block.permutation.withState("personal_music_compilation:playing_disc", true));
             try {
-                block.setPermutation(block.permutation.withState(state, "none"));
+                block.setPermutation(block.permutation.withState(state, id));
             }
             catch { }
-        }
-        
-        // Ustaw odpowiedni stan w zależności od typu dysku
-        if (id.startsWith("personal_music_compilation:")) {
-            // Customowe dyski idą do custom_disc_1
-            try {
-                block.setPermutation(block.permutation.withState(JukeboxStates.Custom_Disc_1, id));
-            }
-            catch { }
-        } else if (id.startsWith("minecraft:")) {
-            // Vanilla dyski - sprawdź który state użyć
-            const vanillaDiscs1 = [
-                "minecraft:music_disc_13", "minecraft:music_disc_cat", "minecraft:music_disc_blocks",
-                "minecraft:music_disc_chirp", "minecraft:music_disc_far", "minecraft:music_disc_mall",
-                "minecraft:music_disc_mellohi", "minecraft:music_disc_stal", "minecraft:music_disc_strad",
-                "minecraft:music_disc_ward", "minecraft:music_disc_11", "minecraft:music_disc_wait",
-                "minecraft:music_disc_otherside", "minecraft:music_disc_5", "minecraft:music_disc_pigstep"
-            ];
-            
-            if (vanillaDiscs1.includes(id)) {
-                try {
-                    block.setPermutation(block.permutation.withState(JukeboxStates.Vanilla_Disc_1, id));
-                }
-                catch { }
-            } else {
-                try {
-                    block.setPermutation(block.permutation.withState(JukeboxStates.Vanilla_Disc_2, id));
-                }
-                catch { }
-            }
         }
     }
+    
     static playNotes(location, dimension, playingID) {
         function tick() {
             const players = jukeboxManager.getPlayersInRadius(location, dimension, 30);
@@ -441,11 +367,11 @@ export class jukeboxManager {
                 }
                 catch { }
             }
-            let randomtick = randomWholeNum(10, 20);
+            let randomTick = randomWholeNum(10, 20);
             system.runTimeout(() => {
                 tick();
-            }, randomtick);
+            }, randomTick);
         }
         tick();
     }
-}
+} 

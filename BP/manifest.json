@@ -7,7 +7,7 @@
     "product_type": "addon"
   },
   "header": {
-            "name": "Personal Music Compilation",
+    "name": "Personal Music Compilation",
     "description": "allow user to create custom music discs",
     "min_engine_version": [
       1,
@@ -18,7 +18,7 @@
     "version": [
       10,
       0,
-      41
+      113
     ]
   },
   "modules": [
@@ -28,7 +28,7 @@
       "version": [
         10,
         0,
-        41
+        113
       ]
     },
     {
@@ -39,7 +39,7 @@
       "version": [
         10,
         0,
-        41
+        113
       ]
     }
   ],
@@ -53,7 +53,7 @@
       "version": [
         10,
         0,
-        41
+        113
       ]
     }
   ]

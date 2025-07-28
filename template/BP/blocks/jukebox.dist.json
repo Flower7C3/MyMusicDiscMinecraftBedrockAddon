@@ -7,16 +7,8 @@
         "category": "items",
         "is_hidden_in_commands": false
       },
-      "traits": {
-        "minecraft:placement_direction": {
-          "enabled_states": [
-            "minecraft:cardinal_direction"
-          ],
-          "y_rotation_offset": 90
-        }
-      },
       "states": {
-                    "personal_music_compilation:vanilla_disc_1": [
+        "personal_music_compilation:vanilla_disc_1": [
           "none",
           "minecraft:music_disc_13",
           "minecraft:music_disc_cat",
@@ -31,32 +23,31 @@
           "minecraft:music_disc_11",
           "minecraft:music_disc_wait",
           "minecraft:music_disc_otherside",
-          "minecraft:music_disc_5",
-          "minecraft:music_disc_pigstep"
+          "minecraft:music_disc_5"
         ],
-                    "personal_music_compilation:vanilla_disc_2": [
+        "personal_music_compilation:vanilla_disc_2": [
           "none",
+          "minecraft:music_disc_pigstep",
           "minecraft:music_disc_relic",
           "minecraft:music_disc_creator",
           "minecraft:music_disc_creator_music_box",
-          "minecraft:music_disc_precipice"
+          "minecraft:music_disc_precipice",
+          "minecraft:music_disc_lava_chicken",
+          "minecraft:music_disc_tears"
         ],
-                    "personal_music_compilation:custom_disc_1": [
-          "none"
-        ],
-                    "personal_music_compilation:custom_disc_2": [
-          "none",
-                      "personal_music_compilation:music_disc_placeholder"
-        ],
-                    "personal_music_compilation:playing_disc": [
+        "personal_music_compilation:playing_disc": [
           false,
           true
+        ],
+        "personal_music_compilation:custom_disc_1": [
+          "none",
+          "personal_music_compilation:none"
         ]
       }
     },
     "components": {
       "minecraft:custom_components": [
-                        "personal_music_compilation:jukebox"
+        "personal_music_compilation:jukebox"
       ],
       "minecraft:tick": {
         "interval_range": [
@@ -73,7 +64,7 @@
     },
     "permutations": [
       {
-                        "condition": "q.block_state('personal_music_compilation:vanilla_disc_1') == 'none' && q.block_state('personal_music_compilation:vanilla_disc_2') == 'none' && q.block_state('personal_music_compilation:custom_disc_1') == 'none' && q.block_state('personal_music_compilation:custom_disc_2') == 'none'",
+        "condition": "TBD",
         "components": {
           "minecraft:material_instances": {
             "up": {
@@ -98,7 +89,7 @@
         }
       },
       {
-                        "condition": "q.block_state('personal_music_compilation:vanilla_disc_1') != 'none' || q.block_state('personal_music_compilation:vanilla_disc_2') != 'none' || q.block_state('personal_music_compilation:custom_disc_1') != 'none' || q.block_state('personal_music_compilation:custom_disc_2') != 'none'",
+        "condition": "TBD",
         "components": {
           "minecraft:material_instances": {
             "up": {
@@ -119,54 +110,6 @@
             "west": {
               "texture": "personal_music_compilation:jukebox_playing_disc"
             }
-          }
-        }
-      },
-      {
-        "condition": "q.block_state('minecraft:cardinal_direction') == 'north'",
-        "components": {
-          "minecraft:transformation": {
-            "rotation": [
-              0,
-              0,
-              0
-            ]
-          }
-        }
-      },
-      {
-        "condition": "q.block_state('minecraft:cardinal_direction') == 'west'",
-        "components": {
-          "minecraft:transformation": {
-            "rotation": [
-              0,
-              90,
-              0
-            ]
-          }
-        }
-      },
-      {
-        "condition": "q.block_state('minecraft:cardinal_direction') == 'south'",
-        "components": {
-          "minecraft:transformation": {
-            "rotation": [
-              0,
-              180,
-              0
-            ]
-          }
-        }
-      },
-      {
-        "condition": "q.block_state('minecraft:cardinal_direction') == 'east'",
-        "components": {
-          "minecraft:transformation": {
-            "rotation": [
-              0,
-              -90,
-              0
-            ]
           }
         }
       }

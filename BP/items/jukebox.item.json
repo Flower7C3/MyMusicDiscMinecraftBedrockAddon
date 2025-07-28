@@ -1,0 +1,18 @@
+{
+  "format_version": "1.20.70",
+  "minecraft:item": {
+    "description": {
+      "identifier": "personal_music_compilation:jukebox"
+    },
+    "components": {
+      "minecraft:max_stack_size": 64,
+      "minecraft:display_name": {
+        "value": "Jukebox"
+      },
+      "minecraft:block_placer": {
+        "block": "personal_music_compilation:jukebox"
+      },
+      "minecraft:icon": "personal_music_compilation:jukebox"
+    }
+  }
+} 

@@ -21,7 +21,10 @@ class MusicDiscGenerator:
         self.src_dir = self.project_root / "src"
         self.bp_dir = self.project_root / "BP"
         self.rp_dir = self.project_root / "RP"
-        
+        self.template_dir = self.project_root / "template"
+        self.bp_template_dir = self.template_dir / "BP"
+        self.rp_template_dir = self.template_dir / "RP"
+
         # Katalogi
         self.items_dir = self.bp_dir / "items"
         self.sounds_dir = self.rp_dir / "sounds" / "items"
@@ -29,13 +32,14 @@ class MusicDiscGenerator:
         
         # Pliki konfiguracyjne
         self.jukebox_file = self.bp_dir / "blocks" / "jukebox.json"
-        self.jukebox_dist_file = self.bp_dir / "blocks" / "jukebox.dist.json"
+        self.jukebox_dist_file = self.bp_template_dir / "blocks" / "jukebox.dist.json"
         self.sound_definitions_file = self.rp_dir / "sounds" / "sound_definitions.json"
-        self.sound_definitions_dist_file = self.rp_dir / "sounds" / "sound_definitions.dist.json"
+        self.sound_definitions_dist_file = self.rp_template_dir / "sounds" / "sound_definitions.dist.json"
         self.item_texture_file = self.rp_dir / "textures" / "item_texture.json"
-        self.item_texture_dist_file = self.rp_dir / "textures" / "item_texture.dist.json"
+        self.item_texture_dist_file = self.rp_template_dir / "textures" / "item_texture.dist.json"
         self.music_discs_file = self.bp_dir / "scripts" / "musicDisc" / "musicDiscs.js"
-        self.music_discs_dist_file = self.bp_dir / "scripts" / "musicDisc" / "musicDiscs.dist.js"
+        self.jukebox_manager_file = self.bp_dir / "scripts" / "jukebox" / "jukeboxManager.js"
+        self.jukebox_manager_dist_file = self.bp_template_dir / "scripts" / "jukebox" / "jukeboxManager.dist.js"
         
         # Plik z sumami kontrolnymi
         self.checksums_file = self.project_root / ".ogg_checksums.json"
@@ -214,7 +218,7 @@ class MusicDiscGenerator:
                 "components": {
                     "minecraft:icon": f"{self.namespace}:music_disc_{disc_name}",
                     "minecraft:display_name": {
-                        "value": f"§bMusic Disc\n§7{display_name}"
+                        "value": f"§bPersonal Music Compilation\n§7{display_name}"
                     },
                     "minecraft:max_stack_size": 1
                 }
@@ -222,7 +226,7 @@ class MusicDiscGenerator:
         }
     
     def _update_jukebox_json(self, disc_names: List[str]):
-        """Aktualizuje jukebox.json dodając nowe dyski do sekcji personal_music_compilation:custom_disc_1."""
+        """Aktualizuje jukebox.json dodając nowe dyski do dynamicznych sekcji custom_disc_X i vanilla_disc_X."""
         if not self.jukebox_dist_file.exists():
             print(ConsoleStyle.error(f"Plik {self.jukebox_dist_file} nie istnieje!"))
             return False
@@ -234,35 +238,252 @@ class MusicDiscGenerator:
             with open(self.jukebox_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
-            # Znajdź sekcję personal_music_compilation:custom_disc_1
+            # Usuń minecraft:cardinal_direction z traits i states
+            if "traits" in data["minecraft:block"]["description"]:
+                traits = data["minecraft:block"]["description"]["traits"]
+                if "minecraft:placement_direction" in traits:
+                    del traits["minecraft:placement_direction"]
+                if not traits:  # Jeśli traits jest puste, usuń cały obiekt
+                    del data["minecraft:block"]["description"]["traits"]
+
+            # Usuń minecraft:cardinal_direction ze states
             states = data["minecraft:block"]["description"]["states"]
-            custom_disc_1 = states.get("personal_music_compilation:custom_disc_1", [])
+            if "minecraft:cardinal_direction" in states:
+                del states["minecraft:cardinal_direction"]
+
+            # Usuń permutacje związane z minecraft:cardinal_direction
+            permutations = data["minecraft:block"]["permutations"]
+            permutations_to_remove = []
+            for i, permutation in enumerate(permutations):
+                if "condition" in permutation and "minecraft:cardinal_direction" in permutation["condition"]:
+                    permutations_to_remove.append(i)
+
+            # Usuń permutacje od końca (żeby nie zmieniać indeksów)
+            for i in reversed(permutations_to_remove):
+                del permutations[i]
             
-            # Usuń wszystkie istniejące dyski personal_music_compilation: i moremusicdiscs:
-            custom_disc_1 = [item for item in custom_disc_1 if not item.startswith("personal_music_compilation:music_disc_") and not item.startswith("moremusicdiscs:music_disc_")]
+            states = data["minecraft:block"]["description"]["states"]
             
-            # Dodaj "none" na początku jeśli nie ma
-            if "none" not in custom_disc_1:
-                custom_disc_1.insert(0, "none")
+            # Aktualizuj sekcje vanilla_disc_X
+            self._update_vanilla_disc_sections(states)
             
-            # Dodaj nowe dyski
-            for disc_name in disc_names:
-                disc_identifier = f"{self.namespace}:music_disc_{disc_name}"
-                if disc_identifier not in custom_disc_1:
-                    custom_disc_1.append(disc_identifier)
-                    print(ConsoleStyle.success(f"Dodano dysk do jukebox: {disc_identifier}"))
+            # Oblicz ile sekcji potrzeba (maksymalnie 15 dysków na sekcję)
+            discs_per_section = 15
+            num_sections = max(1, (len(disc_names) + discs_per_section - 1) // discs_per_section)
             
-            states["personal_music_compilation:custom_disc_1"] = custom_disc_1
+            print(ConsoleStyle.info(f"Tworzę {num_sections} sekcji dla {len(disc_names)} dysków"))
+            
+            # Usuń wszystkie istniejące sekcje custom_disc_X
+            keys_to_remove = []
+            for key in states.keys():
+                if key.startswith("personal_music_compilation:custom_disc_"):
+                    keys_to_remove.append(key)
+            
+            for key in keys_to_remove:
+                del states[key]
+            
+            # Utwórz dynamiczne sekcje
+            for section_num in range(1, num_sections + 1):
+                section_key = f"personal_music_compilation:custom_disc_{section_num}"
+                section_discs = ["none"]
+                
+                # Dodaj dyski do tej sekcji
+                start_idx = (section_num - 1) * discs_per_section
+                end_idx = min(start_idx + discs_per_section, len(disc_names))
+                
+                for i in range(start_idx, end_idx):
+                    disc_identifier = f"{self.namespace}:music_disc_{disc_names[i]}"
+                    section_discs.append(disc_identifier)
+                    print(ConsoleStyle.success(f"Dodano dysk do jukebox (sekcja {section_num}): {disc_identifier}"))
+                
+                states[section_key] = section_discs
+            
+            # Zaktualizuj warunki w permutations
+            self._update_permutations_conditions(data, num_sections)
             
             with open(self.jukebox_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
             
-            print(ConsoleStyle.success(f"Zaktualizowano {self.jukebox_file}"))
+            print(ConsoleStyle.success(f"Zaktualizowano {self.jukebox_file} z {num_sections} sekcjami"))
+            
+            # Zaktualizuj jukeboxManager.js
+            self._update_jukebox_manager_js(num_sections)
+            
             return True
             
         except Exception as e:
             print(ConsoleStyle.error(f"Błąd podczas aktualizacji {self.jukebox_file}: {e}"))
             return False
+    
+    def _update_vanilla_disc_sections(self, states: Dict):
+        """Aktualizuje sekcje vanilla_disc_1 i vanilla_disc_2 na podstawie minecraft.music_disc.json."""
+        minecraft_discs_file = self.src_dir / "minecraft.music_disc.json"
+        
+        if not minecraft_discs_file.exists():
+            print(ConsoleStyle.warning(f"Plik {minecraft_discs_file} nie istnieje, pomijam aktualizację sekcji vanilla"))
+            return
+        
+        try:
+            with open(minecraft_discs_file, 'r', encoding='utf-8') as f:
+                minecraft_discs_data = json.load(f)
+            
+            # Usuń istniejące sekcje vanilla_disc_X
+            keys_to_remove = []
+            for key in states.keys():
+                if key.startswith("personal_music_compilation:vanilla_disc_"):
+                    keys_to_remove.append(key)
+            
+            for key in keys_to_remove:
+                del states[key]
+            
+            # Podziel dyski vanilla na sekcje (maksymalnie 15 na sekcję)
+            discs_per_section = 15
+            vanilla_discs = []
+            
+            for disc_data in minecraft_discs_data:
+                disc_id = disc_data["id"]
+                vanilla_discs.append(f"minecraft:music_disc_{disc_id}")
+            
+            # Oblicz ile sekcji potrzeba
+            num_vanilla_sections = max(1, (len(vanilla_discs) + discs_per_section - 1) // discs_per_section)
+            
+            print(ConsoleStyle.info(f"Tworzę {num_vanilla_sections} sekcji vanilla dla {len(vanilla_discs)} dysków"))
+            
+            # Utwórz sekcje vanilla_disc_X
+            for section_num in range(1, num_vanilla_sections + 1):
+                section_key = f"personal_music_compilation:vanilla_disc_{section_num}"
+                section_discs = ["none"]
+                
+                # Dodaj dyski do tej sekcji
+                start_idx = (section_num - 1) * discs_per_section
+                end_idx = min(start_idx + discs_per_section, len(vanilla_discs))
+                
+                for i in range(start_idx, end_idx):
+                    disc_identifier = vanilla_discs[i]
+                    section_discs.append(disc_identifier)
+                    print(ConsoleStyle.success(f"Dodano dysk vanilla do jukebox (sekcja {section_num}): {disc_identifier}"))
+                
+                states[section_key] = section_discs
+            
+        except Exception as e:
+            print(ConsoleStyle.error(f"Błąd podczas aktualizacji sekcji vanilla: {e}"))
+    
+    def _update_jukebox_json(self, disc_names: List[str]):
+        """Aktualizuje jukebox.json dodając nowe dyski do dynamicznych sekcji custom_disc_X i vanilla_disc_X."""
+        if not self.jukebox_dist_file.exists():
+            print(ConsoleStyle.error(f"Plik {self.jukebox_dist_file} nie istnieje!"))
+            return False
+        
+        # Skopiuj plik dist do głównego pliku
+        shutil.copy2(self.jukebox_dist_file, self.jukebox_file)
+        
+        try:
+            with open(self.jukebox_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            # Usuń minecraft:cardinal_direction z traits i states
+            if "traits" in data["minecraft:block"]["description"]:
+                traits = data["minecraft:block"]["description"]["traits"]
+                if "minecraft:placement_direction" in traits:
+                    del traits["minecraft:placement_direction"]
+                if not traits:  # Jeśli traits jest puste, usuń cały obiekt
+                    del data["minecraft:block"]["description"]["traits"]
+
+            # Usuń minecraft:cardinal_direction ze states
+            states = data["minecraft:block"]["description"]["states"]
+            if "minecraft:cardinal_direction" in states:
+                del states["minecraft:cardinal_direction"]
+
+            # Usuń permutacje związane z minecraft:cardinal_direction
+            permutations = data["minecraft:block"]["permutations"]
+            permutations_to_remove = []
+            for i, permutation in enumerate(permutations):
+                if "condition" in permutation and "minecraft:cardinal_direction" in permutation["condition"]:
+                    permutations_to_remove.append(i)
+
+            # Usuń permutacje od końca (żeby nie zmieniać indeksów)
+            for i in reversed(permutations_to_remove):
+                del permutations[i]
+            
+            states = data["minecraft:block"]["description"]["states"]
+            
+            # Aktualizuj sekcje vanilla_disc_X
+            self._update_vanilla_disc_sections(states)
+            
+            # Oblicz ile sekcji potrzeba (maksymalnie 15 dysków na sekcję)
+            discs_per_section = 15
+            num_sections = max(1, (len(disc_names) + discs_per_section - 1) // discs_per_section)
+            
+            print(ConsoleStyle.info(f"Tworzę {num_sections} sekcji dla {len(disc_names)} dysków"))
+            
+            # Usuń wszystkie istniejące sekcje custom_disc_X
+            keys_to_remove = []
+            for key in states.keys():
+                if key.startswith("personal_music_compilation:custom_disc_"):
+                    keys_to_remove.append(key)
+            
+            for key in keys_to_remove:
+                del states[key]
+            
+            # Utwórz dynamiczne sekcje
+            for section_num in range(1, num_sections + 1):
+                section_key = f"personal_music_compilation:custom_disc_{section_num}"
+                section_discs = ["none"]
+                
+                # Dodaj dyski do tej sekcji
+                start_idx = (section_num - 1) * discs_per_section
+                end_idx = min(start_idx + discs_per_section, len(disc_names))
+                
+                for i in range(start_idx, end_idx):
+                    disc_identifier = f"{self.namespace}:music_disc_{disc_names[i]}"
+                    section_discs.append(disc_identifier)
+                    print(ConsoleStyle.success(f"Dodano dysk do jukebox (sekcja {section_num}): {disc_identifier}"))
+                
+                states[section_key] = section_discs
+            
+            # Zaktualizuj warunki w permutations
+            self._update_permutations_conditions(data, num_sections)
+            
+            with open(self.jukebox_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=4, ensure_ascii=False)
+            
+            print(ConsoleStyle.success(f"Zaktualizowano {self.jukebox_file} z {num_sections} sekcjami"))
+            
+            # Zaktualizuj jukeboxManager.js
+            self._update_jukebox_manager_js(num_sections)
+            
+            return True
+            
+        except Exception as e:
+            print(ConsoleStyle.error(f"Błąd podczas aktualizacji {self.jukebox_file}: {e}"))
+            return False
+    
+    def _update_permutations_conditions(self, data: Dict, num_sections: int):
+        """Aktualizuje warunki w permutations aby uwzględnić wszystkie sekcje custom_disc_X."""
+        permutations = data["minecraft:block"]["permutations"]
+        
+        # Warunek dla pustego jukebox (wszystkie sekcje == 'none')
+        empty_condition_parts = [
+            "q.block_state('personal_music_compilation:vanilla_disc_1') == 'none'",
+            "q.block_state('personal_music_compilation:vanilla_disc_2') == 'none'"
+        ]
+        
+        # Warunek dla grającego jukebox (przynajmniej jedna sekcja != 'none')
+        playing_condition_parts = [
+            "q.block_state('personal_music_compilation:vanilla_disc_1') != 'none'",
+            "q.block_state('personal_music_compilation:vanilla_disc_2') != 'none'"
+        ]
+        
+        # Dodaj warunki dla wszystkich sekcji custom_disc_X
+        for section_num in range(1, num_sections + 1):
+            section_key = f"personal_music_compilation:custom_disc_{section_num}"
+            empty_condition_parts.append(f"q.block_state('{section_key}') == 'none'")
+            playing_condition_parts.append(f"q.block_state('{section_key}') != 'none'")
+        
+        # Zaktualizuj pierwsze dwa permutations (pusty i grający jukebox)
+        # if len(permutations) >= 2:
+        permutations[0]["condition"] = " && ".join(empty_condition_parts)
+        permutations[1]["condition"] = " || ".join(playing_condition_parts)
     
     def _update_sound_definitions(self, disc_names: List[str]):
         """Aktualizuje sound_definitions.json dodając nowe definicje dźwięków."""
@@ -400,218 +621,78 @@ class MusicDiscGenerator:
         # Aktualizuj musicDiscs.js
         self._update_music_discs_js(current_disc_names)
     
-    def _update_music_discs_js(self, disc_names: List[str]):
-        """Aktualizuje musicDiscs.js z nowymi dyskami."""
-        if not self.music_discs_dist_file.exists():
-            print(ConsoleStyle.error(f"Plik {self.music_discs_dist_file} nie istnieje!"))
+    def _update_jukebox_manager_js(self, num_sections: int):
+        """Aktualizuje jukeboxManager.js z dynamicznymi sekcjami custom_disc_X."""
+        if not self.jukebox_manager_dist_file.exists():
+            print(ConsoleStyle.error(f"Plik szablonu {self.jukebox_manager_dist_file} nie istnieje!"))
             return
         
-        # Skopiuj plik dist do głównego pliku
-        shutil.copy2(self.music_discs_dist_file, self.music_discs_file)
+        # Wczytaj szablon
+        with open(self.jukebox_manager_dist_file, 'r', encoding='utf-8') as f:
+            template_content = f.read()
         
-        try:
-            # Zbierz wszystkich artystów z plików MP3
-            artists_dict = self._get_artists_from_mp3_files()
-            
-            # Stwórz nowy plik od podstaw
-            content = """export var artistNames;
-(function (artistNames) {
-    artistNames["C418"] = "C418";
-    artistNames["Lena_Raine"] = "Lena Raine";
-    artistNames["Samuel_Aberg"] = "Samuel Åberg";
-    artistNames["Aaron_Cherof"] = "Aaron Cherof";
-    artistNames["Laudividni"] = "Laudividni";
-    artistNames["Firch"] = "Firch";
-    artistNames["The_Bling_Bling_Cheese"] = "The Bling-Bling Cheese";
-    artistNames["Someone_zy2sh"] = "@Someone-zy2sh";
-    artistNames["The_Musical_Sparrow"] = "The Musical Sparrow";
-    artistNames["T_en_M"] = "T_en_M";
-    artistNames["Naps_the_Block_Music"] = "Naps the Block Music";
-    artistNames["Thaetaa_Terraainn"] = "Thaetaa-Terrainn";
-    artistNames["Doom_On_A_Spoon"] = "Doom_On_A_Spoon";
-    artistNames["Gamingtunes"] = "Gamingtunes";
-    artistNames["Gwyd"] = "Gwyd";
-    artistNames["Antimo_And_Wells"] = "Antimo & Wells";"""
-            
-            # Dodaj nowych artystów
-            for artist_key, artist_name in artists_dict.items():
-                content += f'\n    artistNames["{artist_key}"] = "{artist_name}";'
-            
-            content += """
-})(artistNames || (artistNames = {}));
+        # Generuj definicje custom_disc_X
+        custom_disc_states = []
+        custom_disc_states_array = []
+        
+        for i in range(1, num_sections + 1):
+            custom_disc_states.append(f'    JukeboxStates["Custom_Disc_{i}"] = "{self.namespace}:custom_disc_{i}";')
+            custom_disc_states_array.append(f'    JukeboxStates.Custom_Disc_{i}')
+        
+        # Zastąp placeholdery
+        template_content = template_content.replace('{{CUSTOM_DISC_STATES}}', '\n'.join(custom_disc_states))
 
-export const musicDiscs = {
-    "minecraft:music_disc_13": {
-        musicName: "13",
-        artist: artistNames.C418,
-        sound: {
-            volume: 1,
-            id: "record.13",
-            tickLength: 3580
-        }
-    },
-    "minecraft:music_disc_cat": {
-        musicName: "cat",
-        artist: artistNames.C418,
-        sound: {
-            volume: 1,
-            id: "record.cat",
-            tickLength: 3700
-        }
-    },
-    "minecraft:music_disc_blocks": {
-        musicName: "blocks",
-        artist: artistNames.C418,
-        sound: {
-            volume: 1,
-            id: "record.blocks",
-            tickLength: 6960
-        }
-    },
-    "minecraft:music_disc_chirp": {
-        musicName: "chirp",
-        artist: artistNames.C418,
-        sound: {
-            volume: 1,
-            id: "record.chirp",
-            tickLength: 3740
-        }
-    },
-    "minecraft:music_disc_far": {
-        musicName: "far",
-        artist: artistNames.C418,
-        sound: {
-            volume: 1,
-            id: "record.far",
-            tickLength: 3540
-        }
-    },
-    "minecraft:music_disc_mall": {
-        musicName: "mall",
-        artist: artistNames.C418,
-        sound: {
-            volume: 1,
-            id: "record.mall",
-            tickLength: 3980
-        }
-    },
-    "minecraft:music_disc_mellohi": {
-        musicName: "mellohi",
-        artist: artistNames.C418,
-        sound: {
-            volume: 1,
-            id: "record.mellohi",
-            tickLength: 1980
-        }
-    },
-    "minecraft:music_disc_stal": {
-        musicName: "stal",
-        artist: artistNames.C418,
-        sound: {
-            volume: 1,
-            id: "record.stal",
-            tickLength: 3060
-        }
-    },
-    "minecraft:music_disc_strad": {
-        musicName: "strad",
-        artist: artistNames.C418,
-        sound: {
-            volume: 1,
-            id: "record.strad",
-            tickLength: 3800
-        }
-    },
-    "minecraft:music_disc_ward": {
-        musicName: "ward",
-        artist: artistNames.C418,
-        sound: {
-            volume: 1,
-            id: "record.ward",
-            tickLength: 5080
-        }
-    },
-    "minecraft:music_disc_11": {
-        musicName: "11",
-        artist: artistNames.C418,
-        sound: {
-            volume: 1,
-            id: "record.11",
-            tickLength: 1460
-        }
-    },
-    "minecraft:music_disc_wait": {
-        musicName: "wait",
-        artist: artistNames.C418,
-        sound: {
-            volume: 1,
-            id: "record.wait",
-            tickLength: 4800
-        }
-    },
-    "minecraft:music_disc_otherside": {
-        musicName: "otherside",
-        artist: artistNames.Lena_Raine,
-        sound: {
-            volume: 1,
-            id: "record.otherside",
-            tickLength: 3960
-        }
-    },
-    "minecraft:music_disc_5": {
-        musicName: "5",
-        artist: artistNames.Samuel_Aberg,
-        sound: {
-            volume: 1,
-            id: "record.5",
-            tickLength: 3600
-        }
-    },
-    "minecraft:music_disc_pigstep": {
-        musicName: "Pigstep",
-        artist: artistNames.Lena_Raine,
-        sound: {
-            volume: 1,
-            id: "record.pigstep",
-            tickLength: 3000
-        }
-    },
-    "minecraft:music_disc_relic": {
-        musicName: "Relic",
-        artist: artistNames.Aaron_Cherof,
-        sound: {
-            volume: 1,
-            id: "record.relic",
-            tickLength: 4400
-        }
-    },
-    "minecraft:music_disc_creator": {
-        musicName: "Creator",
-        artist: artistNames.Lena_Raine,
-        sound: {
-            volume: 1,
-            id: "record.creator",
-            tickLength: 3560
-        }
-    },
-    "minecraft:music_disc_creator_music_box": {
-        musicName: "Creator (Music Box)",
-        artist: artistNames.Lena_Raine,
-        sound: {
-            volume: 1,
-            id: "record.creator_music_box",
-            tickLength: 1500
-        }
-    },
-    "minecraft:music_disc_precipice": {
-        musicName: "Precipice",
-        artist: artistNames.Aaron_Cherof,
-        sound: {
-            volume: 1,
-            id: "record.precipice",
-            tickLength: 6000
-        }
-    }"""
+        # Zastąp placeholdery
+        if num_sections == 0:
+            template_content = template_content.replace('{{CUSTOM_DISC_STATES_ARRAY}}', '')
+        else:
+            template_content = template_content.replace('{{CUSTOM_DISC_STATES_ARRAY}}', ',\n' + ',\n'.join(custom_disc_states_array))
+        
+        # Zapisz wygenerowany plik
+        with open(self.jukebox_manager_file, 'w', encoding='utf-8') as f:
+            f.write(template_content)
+        
+        print(ConsoleStyle.success(f"Zaktualizowano {self.jukebox_manager_file} z {num_sections} sekcjami custom_disc_X"))
+
+    def _update_music_discs_js(self, disc_names: List[str]):
+        """Aktualizuje musicDiscs.js z nowymi dyskami."""
+        
+        # Ścieżka do pliku minecraft.music_disc.json
+        minecraft_discs_file = self.src_dir / "minecraft.music_disc.json"
+
+        try:
+            minecraft_discs_array = []
+            custom_disc_array = []
+            
+            # Wczytaj dane z minecraft.music_disc.json
+            if minecraft_discs_file.exists():
+                try:
+                    with open(minecraft_discs_file, 'r', encoding='utf-8') as f:
+                        minecraft_discs_data = json.load(f)
+                    
+                    # Dodaj dyski vanilla z pliku JSON
+                    for disc_data in minecraft_discs_data:
+                        disc_id = disc_data["id"]
+                        music_name = disc_data["musicName"]
+                        artist = disc_data["artist"]
+                        tick_length = disc_data["tickLength"]
+                        
+                        minecraft_discs_array.append(f'    "minecraft:music_disc_{disc_id}": {{\n'
+                                                   f'        musicName: "{music_name}",\n'
+                                                   f'        artist: "{artist}",\n'
+                                                   f'        sound: {{\n'
+                                                   f'            volume: 1,\n'
+                                                   f'            id: "record.{disc_id}",\n'
+                                                   f'            tickLength: {tick_length}\n'
+                                                   f'        }}\n'
+                                                   f'    }}')
+                        
+                        print(ConsoleStyle.success(f"Dodano dysk vanilla do musicDiscs.js: minecraft:music_disc_{disc_id} ({artist} - {music_name})"))
+                        
+                except Exception as e:
+                    print(ConsoleStyle.error(f"Błąd podczas wczytywania {minecraft_discs_file}: {e}"))
+            else:
+                print(ConsoleStyle.warning(f"Plik {minecraft_discs_file} nie istnieje, pomijam dyski vanilla"))
             
             # Dodaj nowe wpisy personal_music_compilation:
             for disc_name in disc_names:
@@ -638,24 +719,25 @@ export const musicDiscs = {
                         print(ConsoleStyle.warning(f"Nie można obliczyć długości dla {disc_name}: {e}"))
                 
                 # Dodaj nowy wpis
-                content += f',\n    "personal_music_compilation:music_disc_{disc_name}": {{\n'
-                content += f'        musicName: "{title}",\n'
-                content += f'        artist: artistNames.{artist},\n'
-                content += f'        sound: {{\n'
-                content += f'            volume: 0.75,\n'
-                content += f'            id: "record.{disc_name}",\n'
-                content += f'            tickLength: {tick_length}\n'
-                content += f'        }}\n'
-                content += f'    }}'
-                
+                custom_disc_array.append(f'    "personal_music_compilation:music_disc_{disc_name}": {{\n'
+                                         f'        musicName: "{title}",\n'
+                                         f'        artist: "{artist}",\n'
+                                         f'        sound: {{\n'
+                                         f'            volume: 1,\n'
+                                         f'            id: "record.{disc_name}",\n'
+                                         f'            tickLength: {tick_length}\n'
+                                         f'        }}\n'
+                                         f'    }}')
+
                 print(ConsoleStyle.success(f"Dodano wpis do musicDiscs.js: personal_music_compilation:music_disc_{disc_name} ({artist} - {title})"))
+
+            # Połącz wszystkie dyski (vanilla + custom)
+            all_discs = minecraft_discs_array + custom_disc_array
             
-            # Dodaj końcowy nawias
-            content += "\n};"
-            
+            # Zapisz wygenerowany plik
             with open(self.music_discs_file, 'w', encoding='utf-8') as f:
-                f.write(content)
-            
+                f.write(f"export const musicDiscs = {{\n{',\n'.join(all_discs)}\n}};")
+
             print(ConsoleStyle.success(f"Zaktualizowano {self.music_discs_file}"))
             
         except Exception as e:
@@ -772,24 +854,6 @@ export const musicDiscs = {
         
         if processed_disc_names:
             print(ConsoleStyle.info(f"Nowe dyski: {', '.join(processed_disc_names)}"))
-
-    def _get_artists_from_mp3_files(self) -> Dict[str, str]:
-        """Zbiera wszystkich artystów z plików MP3 w src/."""
-        mp3_files = list(self.src_dir.glob("*.mp3"))
-        artists_dict = {}
-        
-        for mp3_file in mp3_files:
-            file_name = mp3_file.stem
-            if " - " in file_name:
-                artist_part, title_part = file_name.split(" - ", 1)
-                artist_name = artist_part.strip()
-                artist_key = artist_name.replace(" ", "_").replace("&", "_").replace("-", "_")
-                # Usuń podwójne podkreślniki
-                while "__" in artist_key:
-                    artist_key = artist_key.replace("__", "_")
-                artists_dict[artist_key] = artist_name
-        
-        return artists_dict
     
     def _get_artist_and_title_from_mp3(self, disc_name: str) -> Tuple[str, str]:
         """Wyciąga artystę i tytuł z pliku MP3 na podstawie nazwy dysku."""
@@ -803,10 +867,7 @@ export const musicDiscs = {
                 file_name = mp3_file.stem
                 if " - " in file_name:
                     artist_part, title_part = file_name.split(" - ", 1)
-                    artist = artist_part.strip().replace(" ", "_").replace("&", "_").replace("-", "_")
-                    # Usuń podwójne podkreślniki
-                    while "__" in artist:
-                        artist = artist.replace("__", "_")
+                    artist = artist_part.strip()
                     title = title_part.strip()
                 break
         

@@ -10,6 +10,9 @@ Projekt dodatku Minecraft Bedrock umożliwiający dodawanie własnych dysków mu
 - ✅ **Automatyczne budowanie** dodatku
 - ✅ **Debugowanie** w czasie rzeczywistym
 - ✅ **Kompatybilność** z Minecraft Bedrock
+- ✅ **Dynamiczne sekcje vanilla** — obsługa wszystkich dysków vanilla z Minecraft
+- ✅ **Dynamiczne sekcje custom** — obsługa dowolnej liczby dysków custom
+- ✅ **Szablony JavaScript** — dynamiczne generowanie `jukeboxManager.js`
 
 
 
@@ -49,6 +52,18 @@ Pobierz z [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html)
    python3 build.py --mcaddon
    ```
 
+### Obsługiwane dyski
+
+**Dyski vanilla (21 dysków):**
+- Wszystkie dyski vanilla z Minecraft są automatycznie obsługiwane
+- Sekcje `vanilla_disc_1` i `vanilla_disc_2` są generowane dynamicznie
+- Dysk `minecraft:music_disc_13` do `minecraft:music_disc_lava_chicken`
+
+**Dyski custom:**
+- Dowolna liczba dysków custom z plików MP3
+- Sekcje `custom_disc_1`, `custom_disc_2`, itd. są generowane automatycznie
+- Maksymalnie 15 dysków na sekcję
+
 ### Aktywacja w grze
 
 Po zainstalowaniu dodatku musisz go aktywować w Minecraft:
@@ -75,7 +90,7 @@ Po zainstalowaniu dodatku musisz go aktywować w Minecraft:
 
 6. **Przetestuj jukebox**:
    - Umieść customowy jukebox (`personal_music_compilation:jukebox`) w świecie
-   - Weź customowy dysk (`personal_music_compilation:music_disc_*`) do ręki
+   - Weź dowolny dysk (vanilla lub custom) do ręki
    - Kliknij prawym przyciskiem na jukebox
    - Ciesz się muzyką! 🎵
 
@@ -84,13 +99,18 @@ Po zainstalowaniu dodatku musisz go aktywować w Minecraft:
 ```
 PersonalMusicCompilation/
 ├── src/                          # Pliki MP3 do przetworzenia
+│   └── minecraft.music_disc.json # Lista wszystkich dysków vanilla
 ├── BP/                           # Behavior Pack
 │   ├── items/                   # Custom dyski muzyczne
 │   ├── blocks/                  # Custom jukebox
 │   └── scripts/                 # Logika JavaScript
+│       ├── jukebox/            # Dynamicznie generowany
+│       └── musicDisc/          # Lista dysków (vanilla + custom)
 ├── RP/                          # Resource Pack
 │   ├── sounds/items/            # Pliki dźwiękowe OGG
 │   └── textures/items/          # Tekstury dysków
+├── template/                     # Szablony do generowania
+│   └── BP/scripts/jukebox/     # Szablon jukeboxManager.js
 ├── dist/                        # Zbudowane addony
 ├── music_disc_generator.py      # Generator dysków
 ├── build.py                     # Skrypt budowania
@@ -129,11 +149,12 @@ Skrypt automatycznie:
 5. **Konwertuje MP3 → OGG** używając ffmpeg do `RP/sounds/items/`
 6. **Wyciąga obrazki** z plików MP3 do `RP/textures/items/`
 7. **Tworzy itemy** w `BP/items/` z namespace `personal_music_compilation`
-8. **Aktualizuje jukebox.json** — dodaje wpisy w sekcji `personal_music_compilation:custom_disc_1`
+8. **Aktualizuje jukebox.json** — generuje dynamiczne sekcje `custom_disc_X` i `vanilla_disc_X`
 9. **Aktualizuje sound_definitions.json** — dodaje definicje dźwięków
 10. **Aktualizuje item_texture.json** - dodaje tekstury
-11. **Aktualizuje musicDiscs.js** — dodaje metadane dysków
-12. **Czyści stare pliki** — usuwa definicje dla nieistniejących dysków
+11. **Aktualizuje musicDiscs.js** — dodaje metadane dysków (vanilla + custom)
+12. **Generuje jukeboxManager.js** — dynamicznie z szablonu
+13. **Czyści stare pliki** — usuwa definicje dla nieistniejących dysków
 
 ## 🔧 Rozwiązywanie problemów
 
@@ -142,6 +163,13 @@ Skrypt automatycznie:
 - Upewnij się, że **eksperymentalne funkcje** są włączone
 - Sprawdź konsolę gry (F3 + D) dla komunikatów debugowania
 - Upewnij się, że addon jest poprawnie zainstalowany
+
+
+
+### Dyski vanilla nie działają
+- Sprawdź, czy plik `src/minecraft.music_disc.json` istnieje
+- Uruchom generator ponownie: `python3 music_disc_generator.py`
+- Sprawdź, czy sekcje `vanilla_disc_X` zostały wygenerowane w `jukebox.json`
 
 ### Generator nie działa
 - Sprawdź, czy **ffmpeg** jest zainstalowane
@@ -153,29 +181,14 @@ Skrypt automatycznie:
 - Upewnij się, że struktura katalogów jest prawidłowa
 - Sprawdź logi budowania
 
-## 📦 Struktura projektu
 
-```
-PersonalMusicCompilation/
-├── src/                          # Pliki MP3 do przetworzenia
-├── BP/                           # Behavior Pack
-│   ├── items/                   # Custom dyski muzyczne
-│   ├── blocks/                  # Custom jukebox
-│   └── scripts/                 # Logika JavaScript
-├── RP/                          # Resource Pack
-│   ├── sounds/items/            # Pliki dźwiękowe OGG
-│   └── textures/items/          # Tekstury dysków
-├── dist/                        # Zbudowane addony
-├── music_disc_generator.py      # Generator dysków
-├── build.py                     # Skrypt budowania
-└── console_utils.py             # Narzędzia konsoli
-```
 
 ### Namespace
 Wszystkie elementy używają namespace `personal_music_compilation:`:
 - `personal_music_compilation:music_disc_*` - custom dyski muzyczne
 - `personal_music_compilation:jukebox` - custom jukebox
-- `personal_music_compilation:custom_disc_1` - stan dysku w jukebox
+- `personal_music_compilation:custom_disc_X` - dynamiczne sekcje dysków custom
+- `personal_music_compilation:vanilla_disc_X` - dynamiczne sekcje dysków vanilla
 - `personal_music_compilation:playing_disc` - stan odtwarzania
 
 ### Konwersja nazw
@@ -189,9 +202,14 @@ Skrypt używa plików szablonów jako podstawy konfiguracji:
 - `BP/blocks/jukebox.dist.json` - szablon jukeboxa
 - `RP/sounds/sound_definitions.dist.json` - szablon definicji dźwięków
 - `RP/textures/item_texture.dist.json` - szablon definicji tekstur
-- `BP/scripts/musicDisc/musicDiscs.dist.js` - szablon listy dysków
+- `template/BP/scripts/jukebox/jukeboxManager.dist.js` - szablon JavaScript jukeboxa
 
 Przed każdą aktualizacją skrypt kopiuje plik szablonu do głównego pliku konfiguracyjnego.
+
+### Dynamiczne generowanie JavaScript
+- `jukeboxManager.js` jest generowany dynamicznie z szablonu
+- Obsługuje dowolną liczbę sekcji `custom_disc_X` i `vanilla_disc_X`
+- Automatycznie dostosowuje się do liczby dysków
 
 ### System Git i ignorowanie plików
 Wygenerowane pliki są ignorowane przez Git:
@@ -202,6 +220,7 @@ Wygenerowane pliki są ignorowane przez Git:
 - `RP/sounds/sound_definitions.json` - wygenerowany plik konfiguracyjny
 - `RP/textures/item_texture.json` - wygenerowany plik konfiguracyjny
 - `BP/scripts/musicDisc/musicDiscs.js` - wygenerowany plik konfiguracyjny
+- `BP/scripts/jukebox/jukeboxManager.js` - wygenerowany plik JavaScript
 - `.ogg_checksums.json` - plik z sumami kontrolnymi
 
 Pliki szablonów (`.dist.*`) są śledzone przez Git.
@@ -217,11 +236,13 @@ Skrypt automatycznie:
 - Dodaje nowe dyski na podstawie plików w `src/`
 - Usuwa wszystkie pliki, które nie są przetworzone z `src/`
 - Aktualizuje wszystkie pliki konfiguracyjne:
-  - `jukebox.json` - sekcja `personal_music_compilation:custom_disc_1`
+  - `jukebox.json` - dynamiczne sekcje `custom_disc_X` i `vanilla_disc_X`
   - `sound_definitions.json` - wpisy `record.`
   - `item_texture.json` - wpisy tekstur
-  - `musicDiscs.js` - wpisy dysków
+  - `musicDiscs.js` - wpisy dysków (vanilla + custom)
+  - `jukeboxManager.js` - dynamicznie generowany z szablonu
 - Zachowuje tylko dyski z plików MP3 w `src/`
+- Obsługuje wszystkie dyski vanilla z `minecraft.music_disc.json`
 
 ## 🔧 Narzędzia deweloperskie
 
@@ -277,6 +298,23 @@ Jeśli znajdziesz błąd:
 2. Zbierz komunikaty debugowania
 3. Opisz kroki reprodukcji
 4. Dołącz informacje o wersji Minecraft
+
+## 🆕 Nowe funkcjonalności
+
+### Dynamiczne sekcje dysków
+- **Sekcje vanilla** - automatycznie generowane na podstawie `minecraft.music_disc.json`
+- **Sekcje custom** - dynamicznie dostosowują się do liczby dysków
+- **Maksymalnie 15 dysków** na sekcję dla optymalnej wydajności
+
+### Szablony JavaScript
+- **Dynamiczne generowanie** `jukeboxManager.js` z szablonu
+- **Automatyczne dostosowanie** do liczby dysków
+- **Obsługa przypadków brzegowych** (np. `num_sections = 0`)
+
+### Obsługa wszystkich dysków vanilla
+- **21 dysków vanilla** z Minecraft automatycznie obsługiwane
+- **Od `minecraft:music_disc_13` do `minecraft:music_disc_lava_chicken`**
+- **Dynamiczne sekcje** `vanilla_disc_1` i `vanilla_disc_2`
 
 ## 📄 Licencja
 

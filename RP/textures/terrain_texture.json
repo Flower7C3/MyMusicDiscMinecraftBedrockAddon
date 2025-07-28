@@ -1,11 +1,10 @@
 {
-	"num_mip_levels": 4,
-	"padding": 8,
-	"resource_pack_name": "Custom Jukebox Template 1.20",
-	"texture_name": "atlas.terrain",
-	"texture_data": {
-		    "personal_music_compilation:jukebox_playing_disc": {
-			"textures": "textures/blocks/jukebox_side_playing"
-		}
-	}
+  "num_mip_levels": 4,
+  "padding": 8,
+  "texture_name": "atlas.terrain",
+  "texture_data": {
+    "personal_music_compilation:jukebox_playing_disc": {
+      "textures": "textures/blocks/jukebox_side_playing"
+    }
+  }
 }

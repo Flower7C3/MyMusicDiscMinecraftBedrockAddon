@@ -1,0 +1,128 @@
+[
+  {
+    "id": "13",
+    "musicName": "13",
+    "artist": "C418",
+    "tickLength": 3580
+  },
+  {
+    "id": "cat",
+    "musicName": "cat",
+    "artist": "C418",
+    "tickLength": 3700
+  },
+  {
+    "id": "blocks",
+    "musicName": "blocks",
+    "artist": "C418",
+    "tickLength": 6960
+  },
+  {
+    "id": "chirp",
+    "musicName": "chirp",
+    "artist": "C418",
+    "tickLength": 3740
+  },
+  {
+    "id": "far",
+    "musicName": "far",
+    "artist": "C418",
+    "tickLength": 3540
+  },
+  {
+    "id": "mall",
+    "musicName": "mall",
+    "artist": "C418",
+    "tickLength": 3980
+  },
+  {
+    "id": "mellohi",
+    "musicName": "mellohi",
+    "artist": "C418",
+    "tickLength": 1980
+  },
+  {
+    "id": "stal",
+    "musicName": "stal",
+    "artist": "C418",
+    "tickLength": 3060
+  },
+  {
+    "id": "strad",
+    "musicName": "strad",
+    "artist": "C418",
+    "tickLength": 3800
+  },
+  {
+    "id": "ward",
+    "musicName": "ward",
+    "artist": "C418",
+    "tickLength": 5080
+  },
+  {
+    "id": "11",
+    "musicName": "11",
+    "artist": "C418",
+    "tickLength": 1460
+  },
+  {
+    "id": "wait",
+    "musicName": "wait",
+    "artist": "C418",
+    "tickLength": 4800
+  },
+  {
+    "id": "otherside",
+    "musicName": "otherside",
+    "artist": "Lena Raine",
+    "tickLength": 3960
+  },
+  {
+    "id": "5",
+    "musicName": "5",
+    "artist": "Samuel Åberg",
+    "tickLength": 3600
+  },
+  {
+    "id": "pigstep",
+    "musicName": "Pigstep",
+    "artist": "Lena Raine",
+    "tickLength": 3000
+  },
+  {
+    "id": "relic",
+    "musicName": "Relic",
+    "artist": "Aaron Cherof",
+    "tickLength": 4400
+  },
+  {
+    "id": "creator",
+    "musicName": "Creator",
+    "artist": "Lena Raine",
+    "tickLength": 3560
+  },
+  {
+    "id": "creator_music_box",
+    "musicName": "Creator (Music Box)",
+    "artist": "Lena Raine",
+    "tickLength": 1500
+  },
+  {
+    "id": "precipice",
+    "musicName": "Precipice",
+    "artist": "Aaron Cherof",
+    "tickLength": 6000
+  },
+  {
+    "id": "tears",
+    "musicName": "Tears",
+    "artist": "Amos Roddy",
+    "tickLength": 3500
+  },
+  {
+    "id": "lava_chicken",
+    "musicName": "Lava Chicken",
+    "artist": "Hyper Potions",
+    "tickLength": 2700
+  }
+]
