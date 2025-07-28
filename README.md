@@ -67,7 +67,13 @@ Po zainstalowaniu dodatku musisz go aktywować w Minecraft:
    - Utwórz nowy świat lub edytuj istniejący
    - W ustawieniach świata upewnij się, że "Holiday Creator Features" jest włączone
 
-5. **Przetestuj jukebox**:
+5. **Włącz eksperymentalne funkcje**:
+   - W ustawieniach świata włącz:
+     - ✅ Custom Blocks
+     - ✅ Scripting API
+     - ✅ Custom Items
+
+6. **Przetestuj jukebox**:
    - Umieść customowy jukebox (`personal_music_compilation:jukebox`) w świecie
    - Weź customowy dysk (`personal_music_compilation:music_disc_*`) do ręki
    - Kliknij prawym przyciskiem na jukebox
@@ -128,14 +134,6 @@ Skrypt automatycznie:
 10. **Aktualizuje item_texture.json** - dodaje tekstury
 11. **Aktualizuje musicDiscs.js** — dodaje metadane dysków
 12. **Czyści stare pliki** — usuwa definicje dla nieistniejących dysków
-
-## 🔧 Konfiguracja
-
-### Eksperymentalne funkcje
-W świecie Minecraft włącz:
-- ✅ Custom Blocks
-- ✅ Scripting API
-- ✅ Custom Items
 
 ## 🔧 Rozwiązywanie problemów
 
