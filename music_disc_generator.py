@@ -224,7 +224,7 @@ class MusicDiscGenerator:
     def _update_jukebox_json(self, disc_names: List[str]):
         """Aktualizuje jukebox.json dodając nowe dyski do sekcji personal_music_compilation:custom_disc_1."""
         if not self.jukebox_dist_file.exists():
-            print(f"❌ Plik {self.jukebox_dist_file} nie istnieje!")
+            print(ConsoleStyle.error(f"Plik {self.jukebox_dist_file} nie istnieje!"))
             return False
         
         # Skopiuj plik dist do głównego pliku
@@ -250,24 +250,24 @@ class MusicDiscGenerator:
                 disc_identifier = f"{self.namespace}:music_disc_{disc_name}"
                 if disc_identifier not in custom_disc_1:
                     custom_disc_1.append(disc_identifier)
-                    print(f"✅ Dodano dysk do jukebox: {disc_identifier}")
+                    print(ConsoleStyle.success(f"Dodano dysk do jukebox: {disc_identifier}"))
             
             states["personal_music_compilation:custom_disc_1"] = custom_disc_1
             
             with open(self.jukebox_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
             
-            print(f"✅ Zaktualizowano {self.jukebox_file}")
+            print(ConsoleStyle.success(f"Zaktualizowano {self.jukebox_file}"))
             return True
             
         except Exception as e:
-            print(f"❌ Błąd podczas aktualizacji {self.jukebox_file}: {e}")
+            print(ConsoleStyle.error(f"Błąd podczas aktualizacji {self.jukebox_file}: {e}"))
             return False
     
     def _update_sound_definitions(self, disc_names: List[str]):
         """Aktualizuje sound_definitions.json dodając nowe definicje dźwięków."""
         if not self.sound_definitions_dist_file.exists():
-            print(f"❌ Plik {self.sound_definitions_dist_file} nie istnieje!")
+            print(ConsoleStyle.error(f"Plik {self.sound_definitions_dist_file} nie istnieje!"))
             return False
         
         # Skopiuj plik dist do głównego pliku
@@ -289,7 +289,7 @@ class MusicDiscGenerator:
             
             for key in to_remove:
                 del sound_definitions[key]
-                print(f"🗑️  Usunięto wpis dźwięku: {key}")
+                print(ConsoleStyle.warning(f"Usunięto wpis dźwięku: {key}"))
             
             # Dodaj nowe wpisy
             for disc_name in disc_names:
@@ -309,22 +309,22 @@ class MusicDiscGenerator:
                             }
                         ]
                     }
-                    print(f"✅ Dodano wpis dźwięku: {sound_key}")
+                    print(ConsoleStyle.success(f"Dodano wpis dźwięku: {sound_key}"))
             
             with open(self.sound_definitions_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
             
-            print(f"✅ Zaktualizowano {self.sound_definitions_file}")
+            print(ConsoleStyle.success(f"Zaktualizowano {self.sound_definitions_file}"))
             return True
             
         except Exception as e:
-            print(f"❌ Błąd podczas aktualizacji {self.sound_definitions_file}: {e}")
+            print(ConsoleStyle.error(f"Błąd podczas aktualizacji {self.sound_definitions_file}: {e}"))
             return False
     
     def _update_item_texture(self, disc_names: List[str]):
         """Aktualizuje item_texture.json dodając nowe tekstury."""
         if not self.item_texture_dist_file.exists():
-            print(f"❌ Plik {self.item_texture_dist_file} nie istnieje!")
+            print(ConsoleStyle.error(f"Plik {self.item_texture_dist_file} nie istnieje!"))
             return False
         
         # Skopiuj plik dist do głównego pliku
@@ -346,7 +346,7 @@ class MusicDiscGenerator:
             
             for key in to_remove:
                 del texture_data[key]
-                print(f"🗑️  Usunięto wpis tekstury: {key}")
+                print(ConsoleStyle.warning(f"Usunięto wpis tekstury: {key}"))
             
             # Dodaj nowe wpisy
             for disc_name in disc_names:
@@ -355,16 +355,16 @@ class MusicDiscGenerator:
                     texture_data[texture_key] = {
                         "textures": f"textures/items/music_disc_{disc_name}"
                     }
-                    print(f"✅ Dodano wpis tekstury: {texture_key}")
+                    print(ConsoleStyle.success(f"Dodano wpis tekstury: {texture_key}"))
             
             with open(self.item_texture_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
             
-            print(f"✅ Zaktualizowano {self.item_texture_file}")
+            print(ConsoleStyle.success(f"Zaktualizowano {self.item_texture_file}"))
             return True
             
         except Exception as e:
-            print(f"❌ Błąd podczas aktualizacji {self.item_texture_file}: {e}")
+            print(ConsoleStyle.error(f"Błąd podczas aktualizacji {self.item_texture_file}: {e}"))
             return False
     
     def _cleanup_old_files(self, current_disc_names: List[str]):
@@ -376,7 +376,7 @@ class MusicDiscGenerator:
                 sound_name = sound_file.stem
                 if sound_name not in current_disc_names:
                     sound_file.unlink()
-                    print(f"🗑️  Usunięto stary plik dźwięku: {sound_file.name}")
+                    print(ConsoleStyle.warning(f"Usunięto stary plik dźwięku: {sound_file.name}"))
         
         # Sprawdź istniejące tekstury
         if self.textures_dir.exists():
@@ -384,7 +384,7 @@ class MusicDiscGenerator:
                 texture_name = texture_file.stem.replace("music_disc_", "")
                 if texture_name not in current_disc_names:
                     texture_file.unlink()
-                    print(f"🗑️  Usunięto starą teksturę: {texture_file.name}")
+                    print(ConsoleStyle.warning(f"Usunięto starą teksturę: {texture_file.name}"))
         
         # Usuń nadmiarowe pliki itemów
         if self.items_dir.exists():
@@ -392,7 +392,7 @@ class MusicDiscGenerator:
                 item_name = item_file.stem.replace("music_disc_", "").replace(".item", "")
                 if item_name not in current_disc_names:
                     item_file.unlink()
-                    print(f"🗑️  Usunięto nadmiarowy plik itemu: {item_file.name}")
+                    print(ConsoleStyle.warning(f"Usunięto nadmiarowy plik itemu: {item_file.name}"))
         
         # Usuń nadmiarowe wpisy w sound_definitions.json
         self._cleanup_sound_definitions(current_disc_names)
@@ -403,7 +403,7 @@ class MusicDiscGenerator:
     def _update_music_discs_js(self, disc_names: List[str]):
         """Aktualizuje musicDiscs.js z nowymi dyskami."""
         if not self.music_discs_dist_file.exists():
-            print(f"❌ Plik {self.music_discs_dist_file} nie istnieje!")
+            print(ConsoleStyle.error(f"Plik {self.music_discs_dist_file} nie istnieje!"))
             return
         
         # Skopiuj plik dist do głównego pliku
@@ -648,7 +648,7 @@ export const musicDiscs = {
                 content += f'        }}\n'
                 content += f'    }}'
                 
-                print(f"✅ Dodano wpis do musicDiscs.js: personal_music_compilation:music_disc_{disc_name} ({artist} - {title})")
+                print(ConsoleStyle.success(f"Dodano wpis do musicDiscs.js: personal_music_compilation:music_disc_{disc_name} ({artist} - {title})"))
             
             # Dodaj końcowy nawias
             content += "\n};"
@@ -656,10 +656,10 @@ export const musicDiscs = {
             with open(self.music_discs_file, 'w', encoding='utf-8') as f:
                 f.write(content)
             
-            print(f"✅ Zaktualizowano {self.music_discs_file}")
+            print(ConsoleStyle.success(f"Zaktualizowano {self.music_discs_file}"))
             
         except Exception as e:
-            print(f"❌ Błąd podczas aktualizacji {self.music_discs_file}: {e}")
+            print(ConsoleStyle.error(f"Błąd podczas aktualizacji {self.music_discs_file}: {e}"))
     
     def _cleanup_sound_definitions(self, current_disc_names: List[str]):
         """Usuwa nadmiarowe wpisy w sound_definitions.json."""
@@ -685,16 +685,16 @@ export const musicDiscs = {
             for key in to_remove:
                 del sound_definitions[key]
                 removed_count += 1
-                print(f"🗑️  Usunięto wpis dźwięku: {key}")
+                print(ConsoleStyle.warning(f"Usunięto wpis dźwięku: {key}"))
             
             if removed_count > 0:
                 # Zapisz zaktualizowany plik
                 with open(self.sound_definitions_file, 'w', encoding='utf-8') as f:
                     json.dump(data, f, indent=4, ensure_ascii=False)
-                print(f"✅ Zaktualizowano {self.sound_definitions_file}")
+                print(ConsoleStyle.success(f"Zaktualizowano {self.sound_definitions_file}"))
             
         except Exception as e:
-            print(f"❌ Błąd podczas czyszczenia sound_definitions.json: {e}")
+            print(ConsoleStyle.error(f"Błąd podczas czyszczenia sound_definitions.json: {e}"))
     
     def process_mp3_files(self, specific_file: Optional[str] = None):
         """Główna funkcja przetwarzająca pliki MP3."""
