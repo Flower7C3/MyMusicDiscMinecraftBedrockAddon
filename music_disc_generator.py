@@ -717,6 +717,7 @@ export const musicDiscs = {
         errors = []
         
         for i, mp3_file in enumerate(mp3_files, 1):
+            print(ConsoleStyle.divider())
             print(ConsoleStyle.process(f"Przetwarzam: {mp3_file.name} ({i}/{len(mp3_files)})"))
             
             # Konwertuj nazwę pliku do snake_case
