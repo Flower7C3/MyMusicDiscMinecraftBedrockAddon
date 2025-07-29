@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Polish Road Signs - Virtual Environment Setup Script
+# Python Virtual Environment Setup Script
 # For macOS development
 
-echo "🚦 Setting up virtual environment for Polish Road Signs..."
+echo "🖥️ Setting up Python virtual environment..."
 
 # Check if Python 3 is installed
 if ! command -v python3 &> /dev/null; then
