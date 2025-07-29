@@ -13,8 +13,8 @@ from datetime import datetime
 from pathlib import Path
 from console_utils import ConsoleStyle, print_build_info, print_header, print_usage, print_installation_info
 
-# Pack name - changed from directory name to fixed name
-PACK_NAME = "PersonalMusicCompilation"
+# Pack name from directory name
+PACK_NAME = os.path.basename(os.getcwd())
 
 
 def get_minecraft_dir():
