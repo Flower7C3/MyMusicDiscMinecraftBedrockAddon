@@ -13,7 +13,7 @@ import hashlib
 import argparse
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
-from console_utils import ConsoleStyle, print_header
+from console_utils import ConsoleStyle
 
 class MusicDiscGenerator:
     def __init__(self, project_root: str):
@@ -654,7 +654,7 @@ class MusicDiscGenerator:
     
     def process_mp3_files(self, specific_file: Optional[str] = None):
         """Główna funkcja przetwarzająca pliki MP3."""
-        print_header("Generator Płyt Muzycznych dla Minecraft")
+        ConsoleStyle.print_section("Generator Płyt Muzycznych dla Minecraft")
         
         # Sprawdź czy ffmpeg jest dostępny
         try:
@@ -673,7 +673,7 @@ class MusicDiscGenerator:
         errors = []
         
         for i, mp3_file in enumerate(mp3_files, 1):
-            print(ConsoleStyle.divider())
+            print(ConsoleStyle.divider('-'))
             print(ConsoleStyle.process(f"Przetwarzam [{mp3_file.name}] ({i}/{len(mp3_files)})"))
             
             # Konwertuj nazwę pliku do snake_case
