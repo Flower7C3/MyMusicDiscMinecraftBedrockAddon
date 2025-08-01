@@ -31,8 +31,8 @@ class MusicDiscGenerator:
         self.textures_dir = self.rp_dir / "textures" / "items"
         
         # Pliki konfiguracyjne
-        self.jukebox_file = self.bp_dir / "blocks" / "jukebox.json"
-        self.jukebox_dist_file = self.bp_template_dir / "blocks" / "jukebox.dist.json"
+        self.jukebox_file = self.bp_dir / "blocks" / "jukebox.block.json"
+        self.jukebox_dist_file = self.bp_template_dir / "blocks" / "jukebox.dist.block.json"
         self.sound_definitions_file = self.rp_dir / "sounds" / "sound_definitions.json"
         self.sound_definitions_dist_file = self.rp_template_dir / "sounds" / "sound_definitions.dist.json"
         self.item_texture_file = self.rp_dir / "textures" / "item_texture.json"

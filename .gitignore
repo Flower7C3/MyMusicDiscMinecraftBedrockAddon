@@ -69,7 +69,7 @@ tmp/
 .ogg_checksums.json
 
 # Configuration files modified by the script
-BP/blocks/jukebox.json
+BP/blocks/jukebox.block.json
 RP/sounds/sound_definitions.json
 RP/textures/item_texture.json
 BP/scripts/musicDisc/musicDiscs.js

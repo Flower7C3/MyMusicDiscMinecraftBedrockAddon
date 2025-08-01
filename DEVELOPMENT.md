@@ -22,7 +22,7 @@ Skrypt automatycznie konwertuje nazwy plików do `snake_case`:
 
 Skrypt używa plików szablonów jako podstawy konfiguracji:
 
-- `BP/blocks/jukebox.dist.json` - szablon szafy grającej
+- `BP/blocks/jukebox.dist.block.json` - szablon szafy grającej
 - `RP/sounds/sound_definitions.dist.json` - szablon definicji dźwięków
 - `RP/textures/item_texture.dist.json` - szablon definicji tekstur
 - `template/BP/scripts/jukebox/jukeboxManager.dist.js` - szablon JavaScript szafy grającej
