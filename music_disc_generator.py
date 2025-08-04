@@ -206,7 +206,7 @@ class MusicDiscGenerator:
     def _create_item_json(self, disc_name: str, display_name: str) -> Dict:
         """Tworzy JSON dla itemu płyty muzycznej."""
         return {
-            "format_version": "1.21.40",
+            "format_version": "1.21.60",
             "minecraft:item": {
                 "description": {
                     "identifier": f"{self.namespace}:music_disc_{disc_name}",

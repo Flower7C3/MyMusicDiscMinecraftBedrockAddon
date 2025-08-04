@@ -1,5 +1,5 @@
 {
-  "format_version": "1.20.70",
+  "format_version": "1.21.60",
   "minecraft:item": {
     "description": {
       "identifier": "personal_music_compilation:jukebox"
