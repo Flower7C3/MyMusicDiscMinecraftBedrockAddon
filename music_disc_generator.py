@@ -649,7 +649,9 @@ class MusicDiscGenerator:
             
             # Zapisz wygenerowany plik
             with open(self.music_discs_file, 'w', encoding='utf-8') as f:
-                content = f"export const musicDiscs = {{\n{',\n'.join(all_discs)}\n}};"
+                all_discs_string = '\n'.join(all_discs)
+                newline = '\n'
+                content = f"export const musicDiscs = {{{newline}{all_discs_string}{newline}}};"
                 f.write(content)
 
             print(ConsoleStyle.success(f"Updated [{self.music_discs_file}]"))
