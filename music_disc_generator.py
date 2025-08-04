@@ -805,7 +805,7 @@ class MusicDiscGenerator:
         except (subprocess.CalledProcessError, FileNotFoundError):
             print(ConsoleStyle.error("ffmpeg is not installed or not available!"))
             print(ConsoleStyle.info("Install ffmpeg: https://ffmpeg.org/download.html"))
-            return
+            sys.exit(1)
         
         mp3_files = self._get_mp3_files(specific_file)
         if not mp3_files:
