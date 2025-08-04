@@ -5,6 +5,7 @@ Konwertuje pliki MP3 z katalogu src/ na płyty muzyczne z odpowiednimi teksturam
 """
 
 import os
+import sys
 import json
 import re
 import subprocess
@@ -47,7 +48,7 @@ class MusicDiscGenerator:
         # Namespace
         self.namespace = "personal_music_compilation"
         
-        # Utworzenie katalogów jeśli nie istnieją
+        # Utworzenie katalogów, jeśli nie istnieją
         self._create_directories()
     
     def _create_directories(self):
@@ -61,7 +62,8 @@ class MusicDiscGenerator:
         for directory in directories:
             directory.mkdir(parents=True, exist_ok=True)
     
-    def _to_snake_case(self, text: str) -> str:
+    @staticmethod
+    def _to_snake_case(text: str) -> str:
         """Konwertuje tekst do snake_case."""
         # Usuń rozszerzenie pliku
         text = re.sub(r'\.[^.]*$', '', text)
@@ -86,10 +88,10 @@ class MusicDiscGenerator:
         if specific_file:
             file_path = self.src_dir / specific_file
             if file_path.exists() and file_path.suffix.lower() == '.mp3':
-                print(ConsoleStyle.info(f"Przetwarzam konkretny plik [{specific_file}]"))
+                print(ConsoleStyle.info(f"Processing specific file [{specific_file}]"))
                 return [file_path]
             else:
-                print(ConsoleStyle.error(f"Plik [{specific_file}] nie istnieje lub nie jest plikiem MP3!"))
+                print(ConsoleStyle.error(f"File [{specific_file}] does not exist or is not an MP3 file!"))
                 return []
         
         if not self.src_dir.exists():
@@ -97,7 +99,7 @@ class MusicDiscGenerator:
             return []
         
         mp3_files = list(self.src_dir.glob("*.mp3"))
-        print(ConsoleStyle.info(f"Znaleziono [{len(mp3_files)}] plików MP3 w [{self.src_dir}]"))
+        print(ConsoleStyle.info(f"Found [{len(mp3_files)}] MP3 files in [{self.src_dir}]"))
         return mp3_files
     
     def _extract_artwork(self, mp3_file: Path, output_file: Path) -> bool:
@@ -113,7 +115,7 @@ class MusicDiscGenerator:
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode == 0 and output_file.exists() and output_file.stat().st_size > 0:
-                print(ConsoleStyle.success(f"Wyciągnięto artwork z [{mp3_file.name}] (32x32px)"))
+                print(ConsoleStyle.success(f"Extracted artwork from [{mp3_file.name}] (32x32px)"))
                 return True
             else:
                 # Użyj domyślnego obrazka
@@ -127,27 +129,28 @@ class MusicDiscGenerator:
                     ]
                     result = subprocess.run(cmd, capture_output=True, text=True)
                     if result.returncode == 0:
-                        print(ConsoleStyle.success(f"Użyto domyślnego obrazka dla [{mp3_file.name}] (32x32px)"))
+                        print(ConsoleStyle.success(f"Used default image for [{mp3_file.name}] (32x32px)"))
                         return True
                     else:
-                        print(ConsoleStyle.warning(f"Nie można przeskalować domyślnego obrazka dla [{mp3_file.name}]"))
+                        print(ConsoleStyle.warning(f"Cannot scale default image for [{mp3_file.name}]"))
                         return False
                 else:
-                    print(ConsoleStyle.warning(f"Nie można znaleźć domyślnego obrazka dla [{mp3_file.name}]"))
+                    print(ConsoleStyle.warning(f"Cannot find default image for [{mp3_file.name}]"))
                     return False
                     
         except Exception as e:
-            print(ConsoleStyle.error(f"Błąd podczas wyciągania artwork z [{mp3_file.name}]: {e}"))
+            print(ConsoleStyle.error(f"Error extracting artwork from [{mp3_file.name}]: {e}"))
             return False
-    
-    def _get_file_checksum(self, file_path: Path) -> str:
+
+    @staticmethod
+    def _get_file_checksum(file_path: Path) -> str:
         """Oblicza sumę kontrolną pliku."""
         hash_md5 = hashlib.md5()
         with open(file_path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
-    
+
     def _load_checksums(self) -> Dict[str, str]:
         """Ładuje sumy kontrolne z pliku."""
         if self.checksums_file.exists():
@@ -155,7 +158,7 @@ class MusicDiscGenerator:
                 with open(self.checksums_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception as e:
-                print(ConsoleStyle.warning(f"Błąd podczas ładowania sum kontrolnych: {e}"))
+                print(ConsoleStyle.warning(f"Error loading checksums: {e}"))
         return {}
     
     def _save_checksums(self, checksums: Dict[str, str]):
@@ -164,18 +167,18 @@ class MusicDiscGenerator:
             with open(self.checksums_file, 'w', encoding='utf-8') as f:
                 json.dump(checksums, f, indent=4, ensure_ascii=False)
         except Exception as e:
-            print(ConsoleStyle.warning(f"Błąd podczas zapisywania sum kontrolnych: {e}"))
+            print(ConsoleStyle.warning(f"Error saving checksums: {e}"))
     
     def _convert_mp3_to_ogg(self, mp3_file: Path, ogg_file: Path) -> bool:
-        """Konwertuje plik MP3 do formatu OGG z sprawdzaniem sum kontrolnych."""
-        # Sprawdź czy plik OGG już istnieje i ma tę samą sumę kontrolną
+        """Konwertuje plik MP3 do formatu OGG ze sprawdzaniem sum kontrolnych."""
+        # Sprawdź, czy plik OGG już istnieje i ma tę samą sumę kontrolną
         checksums = self._load_checksums()
         mp3_checksum = self._get_file_checksum(mp3_file)
         
         if ogg_file.exists() and mp3_checksum in checksums:
             existing_checksum = self._get_file_checksum(ogg_file)
             if existing_checksum == checksums[mp3_checksum]:
-                print(ConsoleStyle.info(f"Pominięto konwersję [{mp3_file.name}] (plik OGG już istnieje)"))
+                print(ConsoleStyle.info(f"Skipped conversion [{mp3_file.name}] (OGG file already exists)"))
                 return True
         
         try:
@@ -193,14 +196,14 @@ class MusicDiscGenerator:
                 checksums[mp3_checksum] = ogg_checksum
                 self._save_checksums(checksums)
                 
-                print(ConsoleStyle.success(f"Skonwertowano [{mp3_file.name}] do [{ogg_file.name}]"))
+                print(ConsoleStyle.success(f"Converted [{mp3_file.name}] to [{ogg_file.name}]"))
                 return True
             else:
-                print(ConsoleStyle.error(f"Błąd podczas konwersji [{mp3_file.name}]: {result.stderr}"))
+                print(ConsoleStyle.error(f"Error converting [{mp3_file.name}]: {result.stderr}"))
                 return False
                 
         except Exception as e:
-            print(ConsoleStyle.error(f"Błąd podczas konwersji [{mp3_file.name}]: {e}"))
+            print(ConsoleStyle.error(f"Error converting [{mp3_file.name}]: {e}"))
             return False
     
     def _create_item_json(self, disc_name: str, display_name: str) -> Dict:
@@ -227,9 +230,9 @@ class MusicDiscGenerator:
     
     def _update_jukebox_json(self, disc_names: List[str]):
         """Aktualizuje jukebox.json, dodając nowe płyty do dynamicznych sekcji custom_disc_X i vanilla_disc_X."""
-        ConsoleStyle.print_section("Dodaję listę płyt do szafy grającej")
+        ConsoleStyle.print_section("Adding disc list to jukebox")
         if not self.jukebox_dist_file.exists():
-            print(ConsoleStyle.error(f"Plik [{self.jukebox_dist_file}] nie istnieje!"))
+            print(ConsoleStyle.error(f"File [{self.jukebox_dist_file}] does not exist!"))
             return False
         
         # Skopiuj plik dist do głównego pliku
@@ -272,7 +275,7 @@ class MusicDiscGenerator:
             discs_per_section = 15
             num_sections = max(1, (len(disc_names) + discs_per_section - 1) // discs_per_section)
             
-            print(ConsoleStyle.info(f"Tworzę [{num_sections}] sekcji dla [{len(disc_names)}] płyt"))
+            print(ConsoleStyle.info(f"Creating [{num_sections}] sections for [{len(disc_names)}] discs"))
             
             # Usuń wszystkie istniejące sekcje custom_disc_X
             keys_to_remove = []
@@ -295,7 +298,7 @@ class MusicDiscGenerator:
                 for i in range(start_idx, end_idx):
                     disc_identifier = f"{self.namespace}:music_disc_{disc_names[i]}"
                     section_discs.append(disc_identifier)
-                    print(ConsoleStyle.success(f"Dodano płytę [{disc_identifier}] do szafy grającej w sekcji {section_num}."))
+                    print(ConsoleStyle.success(f"Added disc [{disc_identifier}] to jukebox in section {section_num}."))
                 
                 states[section_key] = section_discs
             
@@ -305,7 +308,7 @@ class MusicDiscGenerator:
             with open(self.jukebox_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
             
-            print(ConsoleStyle.success(f"Zaktualizowano [{self.jukebox_file}] z {num_sections} sekcjami"))
+            print(ConsoleStyle.success(f"Updated [{self.jukebox_file}] with {num_sections} sections"))
             
             # Zaktualizuj jukeboxManager.js
             self._update_jukebox_manager_js(num_sections)
@@ -313,7 +316,7 @@ class MusicDiscGenerator:
             return True
             
         except Exception as e:
-            print(ConsoleStyle.error(f"Błąd podczas aktualizacji [{self.jukebox_file}]: {e}"))
+            print(ConsoleStyle.error(f"Error updating [{self.jukebox_file}]: {e}"))
             return False
     
     def _update_vanilla_disc_sections(self, states: Dict):
@@ -321,7 +324,7 @@ class MusicDiscGenerator:
         minecraft_discs_file = self.src_dir / "minecraft.music_disc.json"
         
         if not minecraft_discs_file.exists():
-            print(ConsoleStyle.warning(f"Plik [{minecraft_discs_file}] nie istnieje, pomijam aktualizację sekcji vanilla"))
+            print(ConsoleStyle.warning(f"File [{minecraft_discs_file}] does not exist, skipping vanilla sections update"))
             return
         
         try:
@@ -348,7 +351,7 @@ class MusicDiscGenerator:
             # Oblicz ile sekcji potrzeba
             num_vanilla_sections = max(1, (len(vanilla_discs) + discs_per_section - 1) // discs_per_section)
             
-            print(ConsoleStyle.info(f"Tworzę [{num_vanilla_sections}] sekcji vanilla dla [{len(vanilla_discs)}] płyt"))
+            print(ConsoleStyle.info(f"Creating [{num_vanilla_sections}] vanilla sections for [{len(vanilla_discs)}] discs"))
             
             # Utwórz sekcje vanilla_disc_X
             for section_num in range(1, num_vanilla_sections + 1):
@@ -362,14 +365,15 @@ class MusicDiscGenerator:
                 for i in range(start_idx, end_idx):
                     disc_identifier = vanilla_discs[i]
                     section_discs.append(disc_identifier)
-                    print(ConsoleStyle.success(f"Dodano vanilla płytę [{disc_identifier}] do szafy grającej w sekcji {section_num}."))
+                    print(ConsoleStyle.success(f"Added vanilla disc [{disc_identifier}] to jukebox in section {section_num}."))
                 
                 states[section_key] = section_discs
             
         except Exception as e:
-            print(ConsoleStyle.error(f"Błąd podczas aktualizacji sekcji vanilla: {e}"))
+            print(ConsoleStyle.error(f"Error updating vanilla sections: {e}"))
 
-    def _update_permutations_conditions(self, data: Dict, num_sections: int):
+    @staticmethod
+    def _update_permutations_conditions(data: Dict, num_sections: int):
         """Aktualizuje warunki w permutations, aby uwzględnić wszystkie sekcje custom_disc_X."""
         permutations = data["minecraft:block"]["permutations"]
 
@@ -398,9 +402,9 @@ class MusicDiscGenerator:
 
     def _update_sound_definitions(self, disc_names: List[str]):
         """Aktualizuje sound_definitions.json, dodając nowe definicje dźwięków."""
-        ConsoleStyle.print_section("Aktualizuję definicje dźwięków")
+        ConsoleStyle.print_section("Updating sound definitions")
         if not self.sound_definitions_dist_file.exists():
-            print(ConsoleStyle.error(f"Plik [{self.sound_definitions_dist_file}] nie istnieje!"))
+            print(ConsoleStyle.error(f"File [{self.sound_definitions_dist_file}] does not exist!"))
             return False
         
         # Skopiuj plik dist do głównego pliku
@@ -422,7 +426,7 @@ class MusicDiscGenerator:
             
             for key in to_remove:
                 del sound_definitions[key]
-                print(ConsoleStyle.delete(f"Usunięto definicję dźwięku [{key}]"))
+                print(ConsoleStyle.delete(f"Removed sound definition [{key}]"))
             
             # Dodaj nowe wpisy
             for disc_name in disc_names:
@@ -442,23 +446,23 @@ class MusicDiscGenerator:
                             }
                         ]
                     }
-                    print(ConsoleStyle.success(f"Dodano definicję dźwięku [{sound_key}]"))
+                    print(ConsoleStyle.success(f"Added sound definition [{sound_key}]"))
             
             with open(self.sound_definitions_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
             
-            print(ConsoleStyle.success(f"Zaktualizowano [{self.sound_definitions_file}]"))
+            print(ConsoleStyle.success(f"Updated [{self.sound_definitions_file}]"))
             return True
             
         except Exception as e:
-            print(ConsoleStyle.error(f"Błąd podczas aktualizacji [{self.sound_definitions_file}]: {e}"))
+            print(ConsoleStyle.error(f"Error updating [{self.sound_definitions_file}]: {e}"))
             return False
     
     def _update_item_texture(self, disc_names: List[str]):
-        ConsoleStyle.print_section("Aktualizuję tekstury")
+        ConsoleStyle.print_section("Updating textures")
         """Aktualizuje item_texture.json dodając nowe tekstury."""
         if not self.item_texture_dist_file.exists():
-            print(ConsoleStyle.error(f"Plik [{self.item_texture_dist_file}] nie istnieje!"))
+            print(ConsoleStyle.error(f"File [{self.item_texture_dist_file}] does not exist!"))
             return False
         
         # Skopiuj plik dist do głównego pliku
@@ -470,7 +474,7 @@ class MusicDiscGenerator:
             
             texture_data = data["texture_data"]
             
-            # Usuń wszystkie istniejące wpisy dla płyt 'personal_music_compilation:'
+            # Usuń wszystkie istniejące wpisy dla płyt `personal_music_compilation:`
             to_remove = []
             for key in texture_data.keys():
                 if key.startswith("personal_music_compilation:music_disc_"):
@@ -480,7 +484,7 @@ class MusicDiscGenerator:
             
             for key in to_remove:
                 del texture_data[key]
-                print(ConsoleStyle.delete(f"Usunięto wpis tekstury [{key}]"))
+                print(ConsoleStyle.delete(f"Removed texture entry [{key}]"))
             
             # Dodaj nowe wpisy
             for disc_name in disc_names:
@@ -489,21 +493,21 @@ class MusicDiscGenerator:
                     texture_data[texture_key] = {
                         "textures": f"textures/items/music_disc_{disc_name}"
                     }
-                    print(ConsoleStyle.success(f"Dodano definicję tekstury [{texture_key}]"))
+                    print(ConsoleStyle.success(f"Added texture definition [{texture_key}]"))
 
             with open(self.item_texture_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
             
-            print(ConsoleStyle.success(f"Zaktualizowano [{self.item_texture_file}]"))
+            print(ConsoleStyle.success(f"Updated [{self.item_texture_file}]"))
             return True
             
         except Exception as e:
-            print(ConsoleStyle.error(f"Błąd podczas aktualizacji [{self.item_texture_file}]: {e}"))
+            print(ConsoleStyle.error(f"Error updating [{self.item_texture_file}]: {e}"))
             return False
     
     def _cleanup_old_files(self, current_disc_names: List[str]):
         """Usuwa pliki dla płyt, które nie są przetworzone z src/."""
-        ConsoleStyle.print_section("Czyszczę stare pliki")
+        ConsoleStyle.print_section("Cleaning old files")
 
         # Sprawdź istniejące pliki dźwięków
         if self.sounds_dir.exists():
@@ -511,7 +515,7 @@ class MusicDiscGenerator:
                 sound_name = sound_file.stem
                 if sound_name not in current_disc_names:
                     sound_file.unlink()
-                    print(ConsoleStyle.delete(f"Usunięto stary plik dźwięku [{sound_file.name}]."))
+                    print(ConsoleStyle.delete(f"Removed old sound file [{sound_file.name}]."))
         
         # Sprawdź istniejące tekstury
         if self.textures_dir.exists():
@@ -519,7 +523,7 @@ class MusicDiscGenerator:
                 texture_name = texture_file.stem.replace("music_disc_", "")
                 if texture_name not in current_disc_names:
                     texture_file.unlink()
-                    print(ConsoleStyle.delete(f"Usunięto starą teksturę [{texture_file.name}]."))
+                    print(ConsoleStyle.delete(f"Removed old texture [{texture_file.name}]."))
         
         # Usuń nadmiarowe pliki itemów
         if self.items_dir.exists():
@@ -527,19 +531,19 @@ class MusicDiscGenerator:
                 item_name = item_file.stem.replace("music_disc_", "").replace(".item", "")
                 if item_name not in current_disc_names:
                     item_file.unlink()
-                    print(ConsoleStyle.delete(f"Usunięto nadmiarowy plik itemu [{item_file.name}]."))
+                    print(ConsoleStyle.delete(f"Removed redundant item file [{item_file.name}]."))
 
     def _update_jukebox_manager_js(self, num_sections: int):
-        """Aktualizuje jukeboxManager.js z dynamicznymi sekcjami custom_disc_X."""
+        """Aktualizuje `jukeboxManager.js` z dynamicznymi sekcjami `custom_disc_X`."""
         if not self.jukebox_manager_dist_file.exists():
-            print(ConsoleStyle.error(f"Plik szablonu [{self.jukebox_manager_dist_file}] nie istnieje!"))
+            print(ConsoleStyle.error(f"Template file [{self.jukebox_manager_dist_file}] does not exist!"))
             return
         
         # Wczytaj szablon
         with open(self.jukebox_manager_dist_file, 'r', encoding='utf-8') as f:
             template_content = f.read()
         
-        # Generuj definicje custom_disc_X
+        # Generuj definicje `custom_disc_X`
         custom_disc_states = []
         custom_disc_states_array = []
         
@@ -560,11 +564,11 @@ class MusicDiscGenerator:
         with open(self.jukebox_manager_file, 'w', encoding='utf-8') as f:
             f.write(template_content)
         
-        print(ConsoleStyle.success(f"Zaktualizowano [{self.jukebox_manager_file}] z {num_sections} sekcjami custom_disc_X"))
+        print(ConsoleStyle.success(f"Updated [{self.jukebox_manager_file}] with {num_sections} custom_disc_X sections"))
 
     def _update_music_discs_js(self, disc_names: List[str]):
         """Aktualizuje musicDiscs.js z nowymi płytami."""
-        ConsoleStyle.print_section("Aktualizuję listę płyt")
+        ConsoleStyle.print_section("Updating disc list")
 
         # Ścieżka do pliku minecraft.music_disc.json
         minecraft_discs_file = self.src_dir / "minecraft.music_disc.json"
@@ -596,12 +600,12 @@ class MusicDiscGenerator:
                                                    f'        }}\n'
                                                    f'    }}')
                         
-                        print(ConsoleStyle.success(f"Dodano płytę [minecraft:music_disc_{disc_id}] ({artist} - {music_name}) do listy."))
+                        print(ConsoleStyle.success(f"Added disc [minecraft:music_disc_{disc_id}] ({artist} - {music_name}) to list."))
                         
                 except Exception as e:
-                    print(ConsoleStyle.error(f"Błąd podczas wczytywania [{minecraft_discs_file}]{e}"))
+                    print(ConsoleStyle.error(f"Error loading [{minecraft_discs_file}]: {e}"))
             else:
-                print(ConsoleStyle.warning(f"Plik [{minecraft_discs_file}] nie istnieje, pomijam płyty vanilla"))
+                print(ConsoleStyle.warning(f"File [{minecraft_discs_file}] does not exist, skipping vanilla discs"))
             
             # Dodaj nowe wpisy personal_music_compilation:
             for disc_name in disc_names:
@@ -625,7 +629,7 @@ class MusicDiscGenerator:
                             # Konwertuj sekundy na ticki (20 ticków na sekundę)
                             tick_length = int(duration * 20)
                     except Exception as e:
-                        print(ConsoleStyle.warning(f"Nie można obliczyć długości dla [{disc_name}]: {e}"))
+                        print(ConsoleStyle.warning(f"Cannot calculate duration for [{disc_name}]: {e}"))
                 
                 # Dodaj nowy wpis
                 custom_disc_array.append(f'    "personal_music_compilation:music_disc_{disc_name}": {{\n'
@@ -638,7 +642,7 @@ class MusicDiscGenerator:
                                          f'        }}\n'
                                          f'    }}')
 
-                print(ConsoleStyle.success(f"Dodano płytę [personal_music_compilation:music_disc_{disc_name}] ({artist} - {title}) do listy."))
+                print(ConsoleStyle.success(f"Added disc [personal_music_compilation:music_disc_{disc_name}] ({artist} - {title}) to list."))
 
             # Połącz wszystkie płyty (vanilla + custom)
             all_discs = minecraft_discs_array + custom_disc_array
@@ -647,26 +651,162 @@ class MusicDiscGenerator:
             with open(self.music_discs_file, 'w', encoding='utf-8') as f:
                 f.write(f"export const musicDiscs = {{\n{',\n'.join(all_discs)}\n}};")
 
-            print(ConsoleStyle.success(f"Zaktualizowano [{self.music_discs_file}]"))
+            print(ConsoleStyle.success(f"Updated [{self.music_discs_file}]"))
             
         except Exception as e:
-            print(ConsoleStyle.error(f"Błąd podczas aktualizacji [{self.music_discs_file}]: {e}"))
+            print(ConsoleStyle.error(f"Error updating [{self.music_discs_file}]: {e}"))
     
+    def clear_all(self, specific_file: Optional[str] = None):
+        """Usuwa wszystkie wygenerowane pliki lub konkretny plik."""
+        if specific_file:
+            ConsoleStyle.print_section(f"Cleanup specific file: {specific_file}", icon="🗑️")
+            return self._clear_specific_file(specific_file)
+        else:
+            ConsoleStyle.print_section("Cleanup all generated files", icon="🗑️")
+            return self._clear_all_files()
+    
+    def _remove_config_files(self):
+        """Remove all config files (sound_definitions.json, item_texture.json, jukebox.block.json, musicDiscs.js)."""
+        config_files = [
+            self.sound_definitions_file,
+            self.item_texture_file,
+            self.jukebox_file,
+            self.music_discs_file
+        ]
+        for f in config_files:
+            if f.exists():
+                try:
+                    f.unlink()
+                    print(ConsoleStyle.delete(f"Removed config file [{f.name}]"))
+                except Exception as e:
+                    print(ConsoleStyle.error(f"Error removing config file [{f.name}]: {e}"))
+
+    def _regenerate_config_files(self):
+        """Regenerate config files based on current MP3s."""
+        mp3_files = self._get_mp3_files()
+        disc_names = [self._to_snake_case(mp3.name) for mp3 in mp3_files]
+        self._update_sound_definitions(disc_names)
+        self._update_item_texture(disc_names)
+        self._update_jukebox_json(disc_names)
+        self._update_music_discs_js(disc_names)
+
+    def _clear_specific_file(self, file_name: str) -> int:
+        """Usuwa pliki dla konkretnego dysku muzycznego."""
+        files_removed = 0
+        
+        # Sprawdź czy to jest identyfikator (snake_case) czy nazwa pliku MP3
+        if file_name.startswith("music_disc_"):
+            # To jest identyfikator - usuń prefix "music_disc_"
+            disc_name = file_name.replace("music_disc_", "")
+        else:
+            # To jest nazwa pliku MP3 - konwertuj do snake_case
+            disc_name = self._to_snake_case(file_name)
+        
+        # Usuń plik dźwięku OGG
+        ogg_file = self.sounds_dir / f"{disc_name}.ogg"
+        if ogg_file.exists():
+            try:
+                ogg_file.unlink()
+                print(ConsoleStyle.delete(f"Removed sound file [{ogg_file.name}]"))
+                files_removed += 1
+            except Exception as e:
+                print(ConsoleStyle.error(f"Error removing [{ogg_file.name}]: {e}"))
+        
+        # Usuń teksturę
+        texture_file = self.textures_dir / f"music_disc_{disc_name}.png"
+        if texture_file.exists():
+            try:
+                texture_file.unlink()
+                print(ConsoleStyle.delete(f"Removed texture [{texture_file.name}]"))
+                files_removed += 1
+            except Exception as e:
+                print(ConsoleStyle.error(f"Error removing [{texture_file.name}]: {e}"))
+        
+        # Usuń plik itemu
+        item_file = self.items_dir / f"music_disc_{disc_name}.item.json"
+        if item_file.exists():
+            try:
+                item_file.unlink()
+                print(ConsoleStyle.delete(f"Removed item file [{item_file.name}]"))
+                files_removed += 1
+            except Exception as e:
+                print(ConsoleStyle.error(f"Error removing [{item_file.name}]: {e}"))
+        
+        if files_removed > 0:
+            print(ConsoleStyle.success(f"Removed [{files_removed}] files for [{file_name}]"))
+        else:
+            print(ConsoleStyle.info(f"No files found for [{file_name}]"))
+        # Regenerate config files after single removal
+        self._regenerate_config_files()
+        return files_removed
+    
+    def _clear_all_files(self) -> int:
+        """Usuwa wszystkie wygenerowane pliki."""
+        files_removed = 0
+        
+        # Usuń wszystkie pliki dźwięków OGG
+        if self.sounds_dir.exists():
+            for sound_file in self.sounds_dir.glob("*.ogg"):
+                try:
+                    sound_file.unlink()
+                    print(ConsoleStyle.delete(f"Removed sound file [{sound_file.name}]"))
+                    files_removed += 1
+                except Exception as e:
+                    print(ConsoleStyle.error(f"Error removing [{sound_file.name}]: {e}"))
+        
+        # Usuń wszystkie tekstury dysków muzycznych
+        if self.textures_dir.exists():
+            for texture_file in self.textures_dir.glob("music_disc_*.png"):
+                try:
+                    texture_file.unlink()
+                    print(ConsoleStyle.delete(f"Removed texture [{texture_file.name}]"))
+                    files_removed += 1
+                except Exception as e:
+                    print(ConsoleStyle.error(f"Error removing [{texture_file.name}]: {e}"))
+        
+        # Usuń wszystkie pliki itemów dysków muzycznych
+        if self.items_dir.exists():
+            for item_file in self.items_dir.glob("music_disc_*.item.json"):
+                try:
+                    item_file.unlink()
+                    print(ConsoleStyle.delete(f"Removed item file [{item_file.name}]"))
+                    files_removed += 1
+                except Exception as e:
+                    print(ConsoleStyle.error(f"Error removing [{item_file.name}]: {e}"))
+        
+        # Usuń plik sum kontrolnych
+        checksums_file = self.project_root / ".ogg_checksums.json"
+        if checksums_file.exists():
+            try:
+                checksums_file.unlink()
+                print(ConsoleStyle.delete(f"Removed checksums file [{checksums_file.name}]"))
+                files_removed += 1
+            except Exception as e:
+                print(ConsoleStyle.error(f"Error removing [{checksums_file.name}]: {e}"))
+        
+        if files_removed > 0:
+            print(ConsoleStyle.success(f"Removed [{files_removed}] files"))
+        else:
+            print(ConsoleStyle.info("No files found to remove"))
+        # Remove config files after full cleanup
+        self._remove_config_files()
+        return files_removed
+
     def process_mp3_files(self, specific_file: Optional[str] = None):
         """Główna funkcja przetwarzająca pliki MP3."""
-        ConsoleStyle.print_section("Generator Płyt Muzycznych dla Minecraft")
+        ConsoleStyle.print_section("Minecraft Music Disc Generator")
         
-        # Sprawdź czy ffmpeg jest dostępny
+        # Sprawdź, czy ffmpeg jest dostępny
         try:
             subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
-            print(ConsoleStyle.error("ffmpeg nie jest zainstalowany lub nie jest dostępny!"))
-            print(ConsoleStyle.info("Zainstaluj ffmpeg: https://ffmpeg.org/download.html"))
+            print(ConsoleStyle.error("ffmpeg is not installed or not available!"))
+            print(ConsoleStyle.info("Install ffmpeg: https://ffmpeg.org/download.html"))
             return
         
         mp3_files = self._get_mp3_files(specific_file)
         if not mp3_files:
-            print(ConsoleStyle.error("Nie znaleziono plików MP3 do przetworzenia!"))
+            print(ConsoleStyle.error("No MP3 files found to process!"))
             return
         
         processed_disc_names = []
@@ -674,14 +814,14 @@ class MusicDiscGenerator:
         
         for i, mp3_file in enumerate(mp3_files, 1):
             print(ConsoleStyle.divider('-'))
-            print(ConsoleStyle.process(f"Przetwarzam [{mp3_file.name}] ({i}/{len(mp3_files)})"))
+            print(ConsoleStyle.process(f"Processing [{mp3_file.name}] ({i}/{len(mp3_files)})"))
             
             # Konwertuj nazwę pliku do snake_case
             disc_name = self._to_snake_case(mp3_file.name)
             display_name = mp3_file.stem  # Oryginalna nazwa bez rozszerzenia
             
-            print(ConsoleStyle.info(f"Nazwa płyty: {disc_name}"))
-            print(ConsoleStyle.info(f"Nazwa wyświetlana: {display_name}"))
+            print(ConsoleStyle.info(f"Disc name: {disc_name}"))
+            print(ConsoleStyle.info(f"Display name: {display_name}"))
             
             try:
                 # Utwórz plik itemu
@@ -690,7 +830,7 @@ class MusicDiscGenerator:
                 
                 with open(item_file, 'w', encoding='utf-8') as f:
                     json.dump(item_data, f, indent=4, ensure_ascii=False)
-                print(ConsoleStyle.success(f"Utworzono item: {item_file.name}"))
+                print(ConsoleStyle.success(f"Created item: {item_file.name}"))
                 
                 # Konwertuj MP3 do OGG
                 ogg_file = self.sounds_dir / f"{disc_name}.ogg"
@@ -702,7 +842,7 @@ class MusicDiscGenerator:
                 self._extract_artwork(mp3_file, texture_file)
                 
             except Exception as e:
-                error_msg = f"Błąd podczas przetwarzania {mp3_file.name}: {e}"
+                error_msg = f"Error processing {mp3_file.name}: {e}"
                 print(ConsoleStyle.error(error_msg))
                 errors.append(error_msg)
         
@@ -728,7 +868,7 @@ class MusicDiscGenerator:
         ConsoleStyle.print_summary(len(processed_disc_names), len(mp3_files), errors)
         
         if processed_disc_names:
-            print(ConsoleStyle.info(f"Nowe płyty: {', '.join(processed_disc_names)}"))
+            print(ConsoleStyle.info(f"New discs: {', '.join(processed_disc_names)}"))
     
     def _get_artist_and_title_from_mp3(self, disc_name: str) -> Tuple[str, str]:
         """Wyciąga artystę i tytuł z pliku MP3 na podstawie nazwy płyty."""
@@ -752,16 +892,28 @@ def main():
     """Główna funkcja skryptu."""
     parser = argparse.ArgumentParser(description="Generator Płyt Muzycznych dla Minecraft")
     parser.add_argument("--file", "-f", help="Konwertuj konkretny plik MP3 z katalogu src/")
+    parser.add_argument("--clear", "-c", action="store_true", help="Clean all generated files")
     args = parser.parse_args()
     
-    # Sprawdź czy jesteśmy w katalogu projektu
+    # Sprawdź, czy jesteśmy w katalogu projektu
     project_root = os.getcwd()
     
     if not os.path.exists(os.path.join(project_root, "BP")) or not os.path.exists(os.path.join(project_root, "RP")):
-        print(ConsoleStyle.error("Nie znaleziono katalogów BP i RP! Upewnij się, że jesteś w katalogu projektu."))
+        print(ConsoleStyle.error("BP and RP directories not found! Make sure you are in the project directory."))
+        return
+
+    generator = MusicDiscGenerator(project_root)
+
+    if args.clear:
+        # Usuń wskazany plik lubwszystkie pliki
+        generator.clear_all(args.file)
         return
     
-    generator = MusicDiscGenerator(project_root)
+    if args.file:
+        # Tryb normalnego przetwarzania
+        generator.process_mp3_files(args.file)
+        return
+
     generator.process_mp3_files(args.file)
 
 if __name__ == "__main__":

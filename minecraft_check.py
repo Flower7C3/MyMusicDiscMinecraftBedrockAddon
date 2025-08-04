@@ -27,10 +27,10 @@ class MinecraftUtils:
             if data and 'builtin_textures' in data:
                 return set(data['builtin_textures'])
             else:
-                print(ConsoleStyle.warning(f"Nieprawidłowa struktura pliku [{MinecraftUtils.BUILTIN_TEXTURES_FILE}]"))
+                print(ConsoleStyle.warning(f"Invalid file structure [{MinecraftUtils.BUILTIN_TEXTURES_FILE}]"))
                 return set()
         except Exception as e:
-            print(ConsoleStyle.error(f"Błąd podczas ładowania [{MinecraftUtils.BUILTIN_TEXTURES_FILE}]: {e}"))
+            print(ConsoleStyle.error(f"Error loading [{MinecraftUtils.BUILTIN_TEXTURES_FILE}]: {e}"))
             return set()
     
     @staticmethod
@@ -247,8 +247,19 @@ class MinecraftUtils:
             errors.append(f"Missing [components] section in [{block_id}] block")
         else:
             components = block_data_section['components']
-            if 'minecraft:material_instances' not in components:
-                errors.append(f"Missing [minecraft:material_instances] section in [{block_id}] block")
+            # Check if material_instances exists in main components OR in permutations
+            has_material_instances_in_components = 'minecraft:material_instances' in components
+            has_material_instances_in_permutations = False
+            
+            # Check permutations for material_instances
+            permutations = block_data_section.get('permutations', [])
+            for permutation in permutations:
+                if 'components' in permutation and 'minecraft:material_instances' in permutation['components']:
+                    has_material_instances_in_permutations = True
+                    break
+            
+            if not has_material_instances_in_components and not has_material_instances_in_permutations:
+                errors.append(f"Missing [minecraft:material_instances] section in [{block_id}] block (not found in components or permutations)")
 
         return errors, warnings
 

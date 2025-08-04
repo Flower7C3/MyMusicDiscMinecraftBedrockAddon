@@ -1,141 +1,139 @@
 # 🎵 Personal Music Compilation – Minecraft Bedrock Addon
 
-Osobista kolekcja muzyki dla Minecraft Bedrock Edition.
+Personal music collection for Minecraft Bedrock Edition.
 
 ---
 
-## 📋 Opis
+## 📋 Description
 
-Ten dodatek umożliwia dodawanie własnych płyt muzycznych z odtwarzaniem we własnej szafie
-grającej (jukebox).
+This addon enables adding custom music discs with playback in your own jukebox.
 
-Skrypt `music_disc_generator.py` automatycznie:
+The `music_disc_generator.py` script automatically:
 
-1. **Weryfikuje ffmpeg** — sprawdza, czy jest zainstalowane
-2. **Skanuje pliki MP3** z katalogu `src/`
-3. **Używa szablonów** — kopiuje pliki `.dist.*` jako podstawę konfiguracji
-4. **Konwertuje nazwy** do `snake_case` dla wszystkich kluczy
-5. **Konwertuje MP3 → OGG** używając ffmpeg do `RP/sounds/items/`. Jeśli plik OGG już istnieje i ma tę samą sumę
-   kontrolną co MP3, konwersja jest pomijana (dane są przechowywane w pliku `.ogg_checksums.json`).
-6. **Wyciąga obrazki** z plików MP3 do `RP/textures/items/`
-7. **Tworzy itemy** w `BP/items/` z namespace `personal_music_compilation`
-8. **Aktualizuje `jukebox.json`** — generuje dynamiczne sekcje `custom_disc_X` i `vanilla_disc_X`
-9. **Aktualizuje `sound_definitions.json`** — dodaje definicje dźwięków
-10. **Aktualizuje `item_texture.json`** – dodaje tekstury
-11. **Aktualizuje `musicDiscs.js`** — dodaje metadane dysków (vanilla + custom)
-12. **Generuje `jukeboxManager.js`** — dynamicznie z szablonu
-13. **Czyści stare pliki** — usuwa definicje dla nieistniejących dysków
+1. **Verifies ffmpeg** — checks if it's installed
+2. **Scans MP3 files** from the `src/` directory
+3. **Uses templates** — copies `.dist.*` files as configuration base
+4. **Converts names** to `snake_case` for all keys
+5. **Converts MP3 → OGG** using ffmpeg to `RP/sounds/items/`. If the OGG file already exists and has the same checksum as the MP3, conversion is skipped (data is stored in `.ogg_checksums.json` file).
+6. **Extracts artwork** from MP3 files to `RP/textures/items/`
+7. **Creates items** in `BP/items/` with `personal_music_compilation` namespace
+8. **Updates `jukebox.json`** — generates dynamic `custom_disc_X` and `vanilla_disc_X` sections
+9. **Updates `sound_definitions.json`** — adds sound definitions
+10. **Updates `item_texture.json`** — adds textures
+11. **Updates `musicDiscs.js`** — adds disc metadata (vanilla + custom)
+12. **Generates `jukeboxManager.js`** — dynamically from template
+13. **Cleans old files** — removes definitions for non-existent discs
 
-### ✨ Funkcjonalności
+### ✨ Features
 
-- ✅ **Custom jukebox** z pełną funkcjonalnością
-- ✅ **Generator dysków muzycznych** — automatyczne przetwarzanie MP3
-- ✅ **Odtwarzanie dźwięku** z pętlą i cząsteczkami
-- ✅ **Automatyczne budowanie** dodatku
-- ✅ **Debugowanie** w czasie rzeczywistym
-- ✅ **Kompatybilność** z Minecraft Bedrock
-- ✅ **Dynamiczne sekcje vanilla** — obsługa wszystkich dysków vanilla z Minecraft
-- ✅ **Dynamiczne sekcje custom** — obsługa dowolnej liczby dysków custom
-- ✅ **Szablony JavaScript** — dynamiczne generowanie `jukeboxManager.js`
+- ✅ **Custom jukebox** with full functionality
+- ✅ **Music disc generator** — automatic MP3 processing
+- ✅ **Sound playback** with loop and particles
+- ✅ **Automatic addon building**
+- ✅ **Real-time debugging**
+- ✅ **Minecraft Bedrock compatibility**
+- ✅ **Dynamic vanilla sections** — handles all vanilla discs from Minecraft
+- ✅ **Dynamic custom sections** — handles any number of custom discs
+- ✅ **JavaScript templates** — dynamic generation of `jukeboxManager.js`
 
-### 📦 Zawartość
+### 📦 Content
 
-Ten addon obsługuje:
+This addon supports:
 
-**Dyski vanilla (21 dysków):**
+**Vanilla discs (21 discs):**
 
-- Wszystkie dyski vanilla z Minecraft są automatycznie obsługiwane
-- Sekcje `vanilla_disc_1` i `vanilla_disc_2` są generowane dynamicznie
-- Dysk `minecraft:music_disc_13` do `minecraft:music_disc_lava_chicken`
+- All vanilla discs from Minecraft are automatically supported
+- `vanilla_disc_1` and `vanilla_disc_2` sections are generated dynamically
+- Discs from `minecraft:music_disc_13` to `minecraft:music_disc_lava_chicken`
 
-**Dyski custom:**
+**Custom discs:**
 
-- Dowolna liczba dysków custom z plików MP3
-- Sekcje `custom_disc_1`, `custom_disc_2`, itd. są generowane automatycznie
-- Maksymalnie 15 dysków na sekcję
+- Any number of custom discs from MP3 files
+- `custom_disc_1`, `custom_disc_2`, etc. sections are generated automatically
+- Maximum 15 discs per section
 
 ---
 
-## 🛠️ Instalacja i budowanie
+## 🛠️ Installation and Building
 
-### Wymagania
+### Requirements
 
-- **Minecraft Bedrock** — z eksperymentalnymi funkcjami
-- **Python** 3.7+ – do budowania paczek
-- **ffmpeg** – do konwersji audio
+- **Minecraft Bedrock** — with experimental features
+- **Python** 3.7+ – for building packages
+- **ffmpeg** – for audio conversion
 
-### Instalacja ffmpeg
+### Installing ffmpeg
 
 | **macOS (Homebrew)**      | **Ubuntu/Debian**                                | **Windows**                                                                    |
 |---------------------------|--------------------------------------------------|--------------------------------------------------------------------------------|
-| ```brew install ffmpeg``` | ```sudo apt update && sudo apt install ffmpeg``` | Pobierz z [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html) |
+| ```brew install ffmpeg``` | ```sudo apt update && sudo apt install ffmpeg``` | Download from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html) |
 
-### Środowisko wirtualne (venv) - macOS
+### Virtual Environment (venv) - macOS
 
-Przed uruchomieniem skryptów na macOS, zalecane jest utworzenie środowiska wirtualnego:
+Before running scripts on macOS, it's recommended to create a virtual environment:
 
-- Automatyczna konfiguracja (zalecane)
+- Automatic setup (recommended)
 
 ```bash
 ./setup_venv.sh
 ```
 
-- Aktywuj środowisko
+- Activate environment
 
 ```bash
 source venv/bin/activate
 ```
 
-### 💻 Budowanie lokalne
+### 💻 Local Building
 
-1. Pobierz repozytorium i wejdź do katalogu:
+1. Download the repository and enter the directory:
     ```bash
    git clone https://github.com/Flower7C3/personal-music-compilation-minecraft-bedrock-addon.git
    cd personal-music-compilation-minecraft-bedrock-addon
    ```
-2. Umieść pliki MP3 w katalogu `src/`
-3. Uruchom generator dysków:
+2. Place MP3 files in the `src/` directory
+3. Run the disc generator:
    ```bash
    python3 music_disc_generator.py
    ```
-4. Uruchom skrypt budowania bez podnoszenia wersji:
+4. Run the build script without version bump:
    ```bash
    python3 build.py --mcaddon --test-on-local --no-bump
    ```
 
-### 📱 Instalacja
+### 📱 Installation
 
-Po zbudowaniu projektu w katalogu [dist/](dist/) znajdziesz pliki `.mcaddon` i  `.mcpack`.
+After building the project, you'll find `.mcaddon` and `.mcpack` files in the [dist/](dist/) directory.
 
-#### 💻 Lokalnie (Minecraft Bedrock) ze zbudowanych paczek
+#### 💻 Locally (Minecraft Bedrock) from built packages
 
-1. Otwórz plik `.mcaddon` w Minecraft Bedrock
-2. Włącz paczki:
-    - Ustawienia → Zasoby globalne
-    - Znajdź "Personal Music Compilation RP" i włącz ją (przesuń na prawą stronę)
-3. Włącz eksperymenty:
-    - Przejdź do Ustawienia → Eksperymenty
-    - Włącz "Holiday Creator Features" (wymagane dla niestandardowych bloków)
-4. Utwórz lub edytuj świat:
-    - Utwórz nowy świat lub edytuj istniejący
-    - W ustawieniach świata upewnij się, że "Holiday Creator Features" jest włączone
-    - Paczka zachowań powinna być automatycznie włączona po włączeniu paczki zasobów
+1. Open the `.mcaddon` file in Minecraft Bedrock
+2. Enable packs:
+    - Settings → Global Resources
+    - Find "Personal Music Compilation RP" and enable it (move to right side)
+3. Enable experiments:
+    - Go to Settings → Experiments
+    - Enable "Holiday Creator Features" (required for custom blocks)
+4. Create or edit world:
+    - Create a new world or edit existing one
+    - In world settings, make sure "Holiday Creator Features" is enabled
+    - Behavior pack should be automatically enabled after enabling resource pack
 
-#### 🌐 Na serwerze (Aternos)
+#### 🌐 On server (Aternos)
 
-1. Wgraj pliki `.mcpack` na serwer Aternos
-2. Uruchom serwer i dołącz do gry
+1. Upload `.mcpack` files to Aternos server
+2. Start server and join the game
 
-### 🎮 Użycie
+### 🎮 Usage
 
-1. Przejdź do trybu kreatywnego
-2. Umieść szafę grającą w świecie
-3. Weź dowolny dysk (vanilla lub custom) do ręki
-4. Kliknij prawym przyciskiem na jukebox
-5. Ciesz się muzyką! 🎵
+1. Go to creative mode
+2. Place a jukebox in the world
+3. Take any disc (vanilla or custom) in hand
+4. Right-click on the jukebox
+5. Enjoy the music! 🎵
 
 ---
 
-## 📄 Licencja
+## 📄 License
 
-Ten projekt jest udostępniany na licencji MIT. Zobacz plik [LICENSE](LICENSE) dla szczegółów.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
