@@ -2,7 +2,7 @@
   "texture_name": "atlas.items",
   "texture_data": {
     "personal_music_compilation:jukebox": {
-      "textures": "textures/blocks/jukebox_side_playing"
+      "textures": "textures/blocks/jukebox_side_playing.png"
     }
   }
 }
